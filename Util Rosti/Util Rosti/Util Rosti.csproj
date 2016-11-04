@@ -7,8 +7,8 @@
     <ProjectGuid>{7308087B-2509-4B93-A584-72F759932411}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Util_Rosti</RootNamespace>
-    <AssemblyName>Util Rosti</AssemblyName>
+    <RootNamespace>Utility_Promus</RootNamespace>
+    <AssemblyName>Utility Promus</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -44,6 +44,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data.cs" />
+    <Compile Include="enums.cs" />
+    <Compile Include="Individuo.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

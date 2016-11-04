@@ -6,7 +6,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Utility_Rostirolla
+namespace Utility_Promus
 {
     class Program
     {
@@ -26,35 +26,13 @@ namespace Utility_Rostirolla
 					Console.WriteLine ("File non trovato!");
 			}
 
-            var fil2e = @"DAJE qwieqweiuqhweiuqhweihqwe
-Bibliografia: qwoeiquweoiwquewq
-
-DAJE2, porcodio (fl. 12309123).
-ALto.
-AOSdiasodijasdoiasjdoasifasofih
-Bibliografia:
-
-DA = ASC
-
-DAJE3, qweqwe (123123).
-Basso.
-ASDJASOJAOSIGJASOIGJosigjaosigjasogijasogijasogiasjgoias
-Bibliografia:
-Ciao!
-
-DAJE4, qwoeijqweoqwie (provaprova)
-provaprovaprovaprova
-prova
-PROVA
-prova=PROVA
-
-DAJE5 = DAJE6";
+           
 
            // debug(file);
             
 
-            Console.WriteLine("Completata lettura; caricato dizionario da {0} righe",file.Length );
-            Console.WriteLine("Inizio parsing...");
+            Console.WriteLine("Completata lettura; caricato dizionario da {0} righe.",file.Length );
+
 
             //int x = 0;
             //bool prec = false;
@@ -72,7 +50,7 @@ DAJE5 = DAJE6";
             Parser p = new Parser(file);
             p.Start();
 
-            Console.WriteLine("Parsing completato!\n\nNumero di paragrafi letti: {0}\n\nNumero di paragrafi completi: {1}", p.Entries, p.EntriesOk);
+            Console.WriteLine("Analisi completata!\n\nNumero di voci analizzate: {0}\n\nNumero di voci valide: {1}", p.Entries, p.EntriesOk);
 
             Console.WriteLine("Inizio scrittura su file...");
 

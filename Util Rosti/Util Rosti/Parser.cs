@@ -3,26 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Globalization;
 
-namespace Utility_Rostirolla
+namespace Utility_Promus
 {
     class Parser
     {
         string _DEBUG;
         string testo;
         int entries, entriesOk = 0;
+        static int conteggioErrori = 0;
 
 		string[] luoghiDiOrigine;
 
-        List<string> Nomi, Cognomi, Parentesi, Corpo, Fonti, Biblio;
+        List<Individuo> individui;
+        
+        string nome, cognome;
 
         // Filtri Paragrafo ---------------------------------------
 		//HACK: controllare eccezioni ("COGNOME o VARIANTE", 
 		// in un secondo momento anche i NOMI GENERICI tipo "Bernardino [I]
 		// e quelli fra parentesi quadre "[Nome]"
-        readonly string COGNOME = @"^([A-Z]+)\,?\s";
-        readonly string NOME = @"([\w\'\s]+)";
+        readonly string COGNOME = @"^(?<cgn>[A-Z]+)\,?\s";
+        readonly string NOME = @"(?<nom>[\w\'\s]+)";
         readonly string PARENTESI = @"\((.*)\).*\n";
         readonly string CORPO = @"([\w\W]+)";
         readonly string FONTI = @"(?:[F][ontiONTI]+\:\s)(.\n)+";
@@ -36,10 +39,25 @@ namespace Utility_Rostirolla
                 @"^\(" //Ricerca di "(in ordine cronologico)"
             };
 
+        readonly string[] MATCH_FLORUIT =
+        {
+            @"(?<floruit>\d{4}-\d{4})", //AAAA-AAAA
+            @"(?<floruit>\d{4}ca\.-\d{4})", //AAAAca.-AAAA
+            @"(?<floruit>\d{4}ca\.)",
+            @"(?<floruit>\d{2,3}\?+)", //AAA? o AA??
+            @"(?<floruit>\d{4})", //AAAA
+        };
 
         Regex filtroParagrafoCompleto;
         Regex filtroParagrafo;
         Regex fineParagrafo;
+
+        Regex 
+            cognome_e_nome,
+            parentesi,
+            fonti,
+            bibliografia;
+
         List<Tuple<int, int>> indici;
 
 
@@ -56,13 +74,8 @@ namespace Utility_Rostirolla
             filtroParagrafo = new Regex(COGNOME + NOME + PARENTESI + CORPO + BIBLIOGRAFIA, RegexOptions.Compiled);
 
 
+            individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
-            Nomi = new List<string>(entries);
-            Cognomi = new List<string>(entries);
-            Parentesi = new List<string>(entries);
-            Corpo = new List<string>(entries);
-            Fonti = new List<string>(entries);
-            Biblio = new List<string>(entries);
 
             defineParagraphs();
 
@@ -71,66 +84,112 @@ namespace Utility_Rostirolla
 
         public void Start ()
         {
-            Console.WriteLine("\nInizio estrapolazione dati...\n");
+            Console.WriteLine(@"
+********************************
+***INIZIO ESTRAPOLAZIONE DATI***
+********************************
+
+");
 
             //Variabili locali
             string currentPar;
-            Match parsedPar;
-            int fail = 0;
+            Match match;
+            int offset;
+
+            //OUTPUT:
+            string nome, cognome, floruit;
+            List<string> nomiAlt;
 
             //Init
             entriesOk = 0;
-    
+            cognome_e_nome = new Regex(COGNOME + NOME);
+            parentesi = new Regex(PARENTESI);
+
             foreach (var id in indici)
             {
+                nome = "";
+                cognome = "";
+                floruit = "";
+                //Leggo il paragrafo
                 currentPar = testo.Substring(id.Item1, id.Item2);
-                
-                parsedPar = filtroParagrafoCompleto.Match(currentPar);
 
-                if (parsedPar.Success)
+                //****NOME E COGNOME****
+                match = cognome_e_nome.Match(currentPar);
+                // Gestione eventuale errore
+                if (!match.Success)
                 {
-                    var g = parsedPar.Groups;
-                    Nomi.Add(g[2].Value);
-                    Cognomi.Add(g[1].Value);
-                    Parentesi.Add(g[3].Value);
-                    Corpo.Add(g[4].Value);
-                    entriesOk++;
-                    //Stampa a console:
-
-                    Console.WriteLine("[{0}]: {1} {2}...", entriesOk, g[2].Value.ToUpper(), g[1].Value.ToUpper());
+                    logErroreEstrazione(currentPar, "Id. NOME E COGNOME");
+                    continue;
                 }
+                //Copio i valori
+                string c = match.Groups["cgn"].Value;
+                cognome = c.Substring(0,1) + c.Substring(1).ToLower();
+                nome = match.Groups["nom"].Value;
+                entriesOk++;
 
-                else
+                // Scrivo a Console
+                Console.Write("\nLeggo...\t{0}\t{1}", nome, cognome);
+
+                //***** CONTENUTO PARENTESI
+                offset = match.Index + match.Length; // Posiziono l'offset di lettura
+                match = parentesi.Match(currentPar, offset);
+                if (!match.Success)
                 {
-                    // Provo altri modelli
-                    parsedPar = filtroParagrafo.Match(currentPar);
-                    if (parsedPar.Success)
-                    {
-                        var g = parsedPar.Groups;
-                        Nomi.Add(g[2].Value);
-                        Cognomi.Add(g[1].Value);
-                        Parentesi.Add(g[3].Value);
-                        Corpo.Add(g[4].Value);
-                        entriesOk++;
-                        //Stampa a console:
-
-                        Console.WriteLine("[{0}]: {1} {2}...", entriesOk, g[2].Value.ToUpper(), g[1].Value.ToUpper());
-                    }
-                    else
-                    {
-                        //Log
-                        fail++;
-                        int len = currentPar.Length >= 32 ? 32 : currentPar.Length;
-                        Console.WriteLine("ERRORE N. {0} - Impossibile leggere:{1}", fail, currentPar.Substring(0, len));
-                    }
-
-                   
-
+                    logErroreEstrazione(currentPar, "Id. PARENTESI");
+                    continue;
                 }
+                // 1) Nomi alternativi
+                nomiAlt = new List<string>(0);
+                MatchCollection matchNomiAlt = 
+                    Regex.Matches(match.Value, @"«(?<nome>[\w\s\']+)»");
+                if (matchNomiAlt.Count > 0) Console.Write("\nDetto anche:");
+                foreach (Match m in matchNomiAlt)
+                {
+                    nomiAlt.Add(m.Groups["nome"].Value);
+                    Console.Write("{0}; ", m.Groups["nome"].Value);
+                }
+                // 2) Floruit
+                bool successFl = false;
+                foreach (var filtro in MATCH_FLORUIT)
+                {
+                    Match matchFl = Regex.Match(match.Value, @"fl\.?\s?" + filtro);
+                    if (matchFl.Success)
+                    {
+                        successFl = true;
+                        floruit = matchFl.Groups["floruit"].Value;
+                        break;
+                    };
+                }
+                if (successFl)
+                    Console.WriteLine("\nAttivo nel periodo {0}.", floruit);
+                if (!successFl) logErroreEstrazione(match.Value, "Id FLORUIT");
+                // 3) DATE NASCITA - MORTE!
+
+                // 4) Provenienza geografica?
+
+                //TODO: continuare
+
+                //Export
+                individui.Add(new Individuo
+                    (
+                    nome,cognome,Attività.NULL,true,true,floruit
+                    ));
 
             }
         }
-      
+
+
+
+        /// <summary>
+        /// Log a console e eventuale GESTIONE paragrafi scartati
+        /// </summary>
+        /// <param name="testo"></param>
+        static void logErroreEstrazione(string testo, string codiceErr)
+        {
+            conteggioErrori++;
+            int len = testo.Length >= 32 ? 32 : testo.Length;
+            Console.WriteLine("!!!\nERRORE N. {0} - Tipo: {1}\nImpossibile interpretare:{2}\n!!!\n", conteggioErrori, codiceErr,testo.Substring(0, len));
+        }
 
         void defineParagraphs ()
         {
@@ -141,7 +200,7 @@ namespace Utility_Rostirolla
             Match match;
 
 			//Stampo a console - inizio
-            Console.WriteLine("***INIZIO DIVISIONE IN PARAGRAFI***");
+            Console.WriteLine("***Inizio divisione in paragrafi...***\n");
 
             //Inizio Ricerca
             match = fineParagrafo.Match(testo);
@@ -160,7 +219,7 @@ namespace Utility_Rostirolla
 				// Progress bar..........
                 if (progress < (match.Index*100f/testo.Length))
                 {
-                    Console.Write('.');
+                    Console.Write('*');
                     progress+= 5;
                 }
 				//Loop
@@ -174,7 +233,7 @@ namespace Utility_Rostirolla
 				indici.Add(new Tuple<int, int>(inizioPar, testo.Length - inizioPar));
 
             entriesOk = indici.Count;
-			Console.WriteLine("Trovati {0} Paragrafi validi su un totale di {1} paragrafi analizzati.", entriesOk, entries);
+			Console.WriteLine("\nTrovati {0} Paragrafi validi su un totale di {1} paragrafi analizzati.", entriesOk, entries);
 
         }
 
@@ -236,24 +295,25 @@ namespace Utility_Rostirolla
 
 
 
-        public List<string> Export ()
-        {
-            List<string> result = new List<string>(Nomi.Count);
+        //public List<string> Export ()
+        //{
+            
+//            List<string> result = new List<string>(Nomi.Count);
 
-            for (int i = 0; i < Nomi.Count; i++)
-            {
-                string formato = string.Format(
-                    @"
-INDIVIDUO N.{0}: {1} {2} ({3})
-***INFO***
-{4}
-**********", 
-                    i, Nomi[i], Cognomi[i], Parentesi[i], Corpo[i]);
-                result.Add(formato);
-            }
+//            for (int i = 0; i < Nomi.Count; i++)
+//            {
+//                string formato = string.Format(
+//                    @"
+//INDIVIDUO N.{0}: {1} {2} ({3})
+//***INFO***
+//{4}
+//**********", 
+//                    i, Nomi[i], Cognomi[i], Parentesi[i], Corpo[i]);
+//                result.Add(formato);
+//            }
 
-            return result;
-        }
+//            return result;
+        //}
 
         public int Entries { get { return entries; } }
         public int EntriesOk { get { return entriesOk; } }
