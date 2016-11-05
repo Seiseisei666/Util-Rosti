@@ -17,7 +17,9 @@ namespace Utility_Promus
             string[] allWrds = str.Split(' ');
 
             foreach (string s in allWrds)
-                helper = helper + (s.Substring(0, 1).ToUpper() + s.Substring(1).ToLower() + " ");
+                if (s.Length > 1)
+                    helper = helper + (s.Substring(0, 1).ToUpper() + s.Substring(1).ToLower() + " ");
+                else helper = helper + s;
 
             return helper;
         }

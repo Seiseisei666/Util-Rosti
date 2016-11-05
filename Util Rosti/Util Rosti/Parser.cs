@@ -36,7 +36,7 @@ namespace Utility_Promus
         // e quelli fra parentesi quadre "[Nome]"
         static readonly string COGNOME = @"^(?<cgn>[A-Z]+)\,?\s";
         static readonly string NOME = @"(?<nom>[\w\'\s]+)";
-        static readonly string PARENTESI = @"\((?<contenuto>.+)\)[\s\.\;]\r?\n";
+        static readonly string PARENTESI = @"\((?<contenuto>.*)\)[\s\.\;]*\r?\n";
         static readonly string CORPO = @"(?<corpo>[.+(\r\n){1}]+)";
         static readonly string FONTI = @"(F(onti|ONTI)\:\s)(?<fonti>[.+(\r\n){1}]+)";
         static readonly string BIBLIOGRAFIA = @"(B(ibliografia|IBLIOGRAFIA)\:\s)(?<biblio>[.+(\r\n){1}]+)";
@@ -59,16 +59,16 @@ namespace Utility_Promus
             @"\d{4})", //AAAA
         };
 
-        static readonly string MATCH_NASCITA = @"\bn\.";
+        readonly string MATCH_NASCITA = @"\bn\.";
         readonly string MATCH_DATA_NASCITA = @"\b[Nn]\..+?(?<data>\d{1,2}°?\..+?\d{4})";
         readonly string MATCH_DATA_MORTE = @"(?<data>\d{1,2}°?\.[IVX]+\.\d{4})†";
         readonly string MATCH_DATA_MORTE_NO_CROCE = @"\b[Nn]\..+?(\.|([eo]\s))\d{4}\s?-\s?ivi(\s-)?(?<data>\d{1,2}°?\.[IVX]+\.\d{4})";
 
-        readonly Regex regexFonti = new Regex(@"F(onti|ONTI)\:", RegexOptions.Compiled);
-        readonly Regex regexBiblio = new Regex(@"B(ibliografia|IBLIOGRAFIA)\:", RegexOptions.Compiled);
         readonly Regex fineParagrafo = new Regex(@"\r\n\r\n", RegexOptions.Compiled);
         readonly Regex cognome_e_nome = new Regex(COGNOME + NOME, RegexOptions.Compiled);
         readonly Regex regexParentesi = new Regex(PARENTESI, RegexOptions.Compiled);
+        readonly Regex regexFonti = new Regex(@"F(onti|ONTI)\:", RegexOptions.Compiled);
+        readonly Regex regexBiblio = new Regex(@"B(ibliografia|IBLIOGRAFIA)\:", RegexOptions.Compiled);
 
 
         List<Tuple<int, int>> indici;
@@ -292,7 +292,7 @@ namespace Utility_Promus
 
 
             // 4) Provenienza geografica
-            match = Regex.Match(parentesi, @"(\bD|da\b)|(\bD|di\b)|(\bN|n\.\sa\b)(?<luogo>[A-Z]\w+\b)");
+            match = Regex.Match(parentesi, @"(?:\b[Dd][ai]\b|[Nn]\.\sa)\s(?<luogo>[A-Z]\w+)");
             if (match.Success)
             {
                 individuo.SetProvenienza(match.Groups["luogo"].Value);
@@ -312,8 +312,8 @@ namespace Utility_Promus
             Match match;
             bool fonti, biblio;
 
-            fonti = Regex.Match(paragrafo, @"F(onti|ONTI)\:").Success;
-            biblio = Regex.Match(paragrafo, @"B(ibliografia|IBLIOGRAFIA)\:").Success;
+            fonti = regexFonti.Match(paragrafo).Success;
+            biblio = regexBiblio.Match(paragrafo).Success;
         }
 
 
@@ -326,7 +326,7 @@ namespace Utility_Promus
         {
             conteggioErrori++;
             int len = testo.Length >= 32 ? 32 : testo.Length;
-            Console.WriteLine("!!!\nERRORE N. {0} - Tipo: {1}\nImpossibile interpretare:{2}\n!!!\n", conteggioErrori, codiceErr,testo.Substring(0, len));
+            Console.WriteLine("\n!!!\nERRORE N. {0} - Tipo: {1}\nImpossibile interpretare:{2}\n", conteggioErrori, codiceErr,testo.Substring(0, len));
         }
 
         
