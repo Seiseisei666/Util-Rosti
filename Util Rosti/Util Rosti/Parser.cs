@@ -34,12 +34,12 @@ namespace Utility_Promus
         //HACK: controllare eccezioni ("COGNOME o VARIANTE", 
         // in un secondo momento anche i NOMI GENERICI tipo "Bernardino [I]
         // e quelli fra parentesi quadre "[Nome]"
-        readonly string COGNOME = @"^(?<cgn>[A-Z]+)\,?\s";
-        readonly string NOME = @"(?<nom>[\w\'\s]+)";
-        readonly string PARENTESI = @"\((.+)\).*\n";
-        readonly string CORPO = @"([\w\W]+)";
-        readonly string FONTI = @"(?:[F][ontiONTI]+\:\s)(.\n)+";
-        readonly string BIBLIOGRAFIA = @"(?:[B][ibliografiaIBLIOGRAFIA]+\:\s)(.\n)+";
+        static readonly string COGNOME = @"^(?<cgn>[A-Z]+)\,?\s";
+        static readonly string NOME = @"(?<nom>[\w\'\s]+)";
+        static readonly string PARENTESI = @"\((?<contenuto>.+)\)[\s\.\;]\r?\n";
+        static readonly string CORPO = @"(?<corpo>[.+(\r\n){1}]+)";
+        static readonly string FONTI = @"(F(onti|ONTI)\:\s)(?<fonti>[.+(\r\n){1}]+)";
+        static readonly string BIBLIOGRAFIA = @"(B(ibliografia|IBLIOGRAFIA)\:\s)(?<biblio>[.+(\r\n){1}]+)";
 
         readonly string [] FILTRI_PARAGRAFI = {
                 @"^\*[A-Z]", //Ricerca di luogo geografico (iniziante con *)
@@ -49,25 +49,27 @@ namespace Utility_Promus
                 @"^\(" //Ricerca di "(in ordine cronologico)"
             };
 
+
         readonly string[] MATCH_FLORUIT =
         {
-            @"(?<floruit>\d{4}-\d{4})", //AAAA-AAAA
-            @"(?<floruit>\d{4}ca\.-\d{4})", //AAAAca.-AAAA
-            @"(?<floruit>\d{4}ca\.)",
-            @"(?<floruit>\d{2,3}\?+)", //AAA? o AA??
-            @"(?<floruit>\d{4})", //AAAA
+           // @"\d{4}-\d{4})", //AAAA-AAAA
+            @"\d{4}(ca\.)?-\d{4})", //AAAA{ca.}-AAAA
+            @"\d{4}ca\.)", //AAAAca.
+            @"\d{2,3}\?+)", //AAA? o AA??
+            @"\d{4})", //AAAA
         };
 
-        readonly string MATCH_DATA_NASCITA = @"n\.\s.*?(?<data>\d{1,2}°?\..+?\d{4})";
+        static readonly string MATCH_NASCITA = @"\bn\.";
+        readonly string MATCH_DATA_NASCITA = @"\b[Nn]\..+?(?<data>\d{1,2}°?\..+?\d{4})";
         readonly string MATCH_DATA_MORTE = @"(?<data>\d{1,2}°?\.[IVX]+\.\d{4})†";
+        readonly string MATCH_DATA_MORTE_NO_CROCE = @"\b[Nn]\..+?(\.|([eo]\s))\d{4}\s?-\s?ivi(\s-)?(?<data>\d{1,2}°?\.[IVX]+\.\d{4})";
 
-        Regex fineParagrafo;
+        readonly Regex regexFonti = new Regex(@"F(onti|ONTI)\:", RegexOptions.Compiled);
+        readonly Regex regexBiblio = new Regex(@"B(ibliografia|IBLIOGRAFIA)\:", RegexOptions.Compiled);
+        readonly Regex fineParagrafo = new Regex(@"\r\n\r\n", RegexOptions.Compiled);
+        readonly Regex cognome_e_nome = new Regex(COGNOME + NOME, RegexOptions.Compiled);
+        readonly Regex regexParentesi = new Regex(PARENTESI, RegexOptions.Compiled);
 
-        Regex 
-            cognome_e_nome,
-            regexParentesi,
-            fonti,
-            bibliografia;
 
         List<Tuple<int, int>> indici;
 
@@ -194,7 +196,7 @@ namespace Utility_Promus
         bool analizzaNome ()
         {
             Match match;
-            cognome_e_nome = new Regex(COGNOME + NOME);
+            //cognome_e_nome = new Regex(COGNOME + NOME);
             match = cognome_e_nome.Match(paragrafo);
             // Gestione eventuale errore
             if (!match.Success)
@@ -216,15 +218,16 @@ namespace Utility_Promus
 
         bool analizzaParentesi()
         {
+            int idx_fine_parentesi;
             Match match;
-            regexParentesi = new Regex(PARENTESI);
             match = regexParentesi.Match(paragrafo);
             if (!match.Success)
             {
-                logErroreEstrazione(paragrafo, "Id. PARENTESI");
+                logErroreEstrazione(paragrafo, "Parentesi non presente o illegibile!");
                 return false;
             }
-            string parentesi = match.Value;
+            string parentesi = match.Groups["contenuto"].Value;
+            idx_fine_parentesi = match.Index + match.Length;
 
             // 1) Nomi alternativi
             nomiAlt = new List<string>(0);
@@ -237,40 +240,83 @@ namespace Utility_Promus
                 Console.Write("{0}; ", m.Groups["nome"].Value);
             }
             // 2) Floruit
-            bool successFl = false;
             foreach (var filtro in MATCH_FLORUIT)
             {
-                Match matchFl = Regex.Match(parentesi, @"fl\.?\s?" + filtro);
-                if (matchFl.Success)
+                match = Regex.Match(parentesi, @"\bfl\.?\s?(?<floruit>" + filtro);
+                if (match.Success)
                 {
-                    successFl = true;
-                    floruit = matchFl.Groups["floruit"].Value;
+                    floruit = match.Groups["floruit"].Value;
+                    string result = string.Format("Floruit {0}.", floruit);
+                    individuo.AddNota(result);
+                    Console.WriteLine(result);
                     break;
+
                 };
             }
-            if (successFl)
-                Console.WriteLine("\nAttivo nel periodo {0}.", floruit);
-            else logErroreEstrazione(match.Value, "FLORUIT NON PRESENTE");
 
 
             // 3) DATE NASCITA - MORTE!
-
             Data data;
-            match = Regex.Match(parentesi, MATCH_DATA_NASCITA);
-            if (match.Success && Data.TryParse(match.Groups["data"].Value, out data))
+
+            //Cerco segnalatori di presenza data nascita
+            if (Regex.Match(parentesi, @"\b[Nn]\.").Success)
             {
-                individuo.SetData(data,TipoData.Nascita);
-                Console.Write("\nNato nel {0}\t", data.ToString());
+                match = Regex.Match(parentesi, MATCH_DATA_NASCITA);
+                if (match.Success && Data.TryParse(match.Groups["data"].Value, out data))
+                {
+                    individuo.SetData(data, TipoData.Nascita);
+                    Console.Write("\nNato nel {0}\t", data.ToString());
+                }
             }
-            match = Regex.Match(parentesi, MATCH_DATA_MORTE);
-            if (match.Success && Data.TryParse(match.Groups["data"].Value, out data))
+
+            //Cerco segnalatori di presenza data morte
+            bool morte = false;
+            if ( Regex.Match(parentesi, @"†").Success)
             {
-                individuo.SetData(data, TipoData.Morte);
-                Console.Write("Morto nel {0}", data.ToString());
+                match = Regex.Match(parentesi, MATCH_DATA_MORTE);
+                morte = true;
             }
-            // 4) Provenienza geografica?
+            else if (Regex.Match(parentesi, @"\b[Nn]\..+?(\.|([eo]\s))\d{4}\s?-\s?\d").Success)
+            {
+                match = Regex.Match(parentesi, MATCH_DATA_MORTE_NO_CROCE);
+                morte = true;
+            }
+
+            if (morte && match.Success)
+                if (Data.TryParse(match.Groups["data"].Value, out data))
+                {
+                    individuo.SetData(data, TipoData.Morte);
+                    Console.Write("Morto nel {0}", data.ToString());
+                }
+                else logErroreEstrazione(match.Groups["data"].Value, "Data morte illegibile");
+
+
+            // 4) Provenienza geografica
+            match = Regex.Match(parentesi, @"(\bD|da\b)|(\bD|di\b)|(\bN|n\.\sa\b)(?<luogo>[A-Z]\w+\b)");
+            if (match.Success)
+            {
+                individuo.SetProvenienza(match.Groups["luogo"].Value);
+                Console.Write("\nProvenienza: {0}", match.Groups["luogo"].Value);
+            }
+
+            //TODO: Copio i valori, 
+            //riposiziono *rPos
+
+            paragrafo = paragrafo.Substring(idx_fine_parentesi);
             return true;
         }
+
+        void analizzaCorpo()
+        {
+            //Locali
+            Match match;
+            bool fonti, biblio;
+
+            fonti = Regex.Match(paragrafo, @"F(onti|ONTI)\:").Success;
+            biblio = Regex.Match(paragrafo, @"B(ibliografia|IBLIOGRAFIA)\:").Success;
+        }
+
+
 
         /// <summary>
         /// Log a console e eventuale GESTIONE paragrafi scartati

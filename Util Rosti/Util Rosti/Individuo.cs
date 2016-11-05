@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 
 
@@ -49,17 +50,30 @@ namespace Utility_Promus
         /// Costruisce un individuo
         /// DEFAULT = Musicista maschio senza attività specifica
         /// </summary>
-        public Individuo (string nome, string cognome, Attività attPreval = Attività.NULL, bool èMusicista = true, bool èMaschio = true, string note = "NULL", string provenienza = "NULL")
+        public Individuo (string nome, string cognome, Attività attPreval = Attività.NULL, bool èMusicista = true)
         {
             this.id = ++count;
             this.nome = nome;
             this.cognome = cognome;
             this.attivitàPrevalente = attPreval;
-            this.èMaschio = èMaschio;
+            this.èMaschio = true;
             this.èMusicista = èMusicista;
-            this.Note = note;
-            this.provenienza = provenienza;
+            this.Note = string.Empty;
+            this.provenienza = string.Empty;
         }
+
+        public void AddNota(string nota, bool aCapo = false)
+        {
+            Note = Note + (aCapo ? ".\n" : "; ") + nota;
+        }
+
+        public void SetProvenienza (string provenienza)
+        {
+            if (this.provenienza != string.Empty)
+                throw new Exception(provenienza);
+            else this.provenienza = provenienza;
+        }
+
         #endregion
 
         #region ******************ALTRE TABELLE**********************

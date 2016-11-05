@@ -12,7 +12,14 @@ namespace Utility_Promus
         public static string ToCapitalCase (this string str)
         {
             if (str.Length < 2) return str;
-            return str.Substring(0, 1).ToUpper() + str.Substring(1).ToLower();
+
+            string helper = "";
+            string[] allWrds = str.Split(' ');
+
+            foreach (string s in allWrds)
+                helper = helper + (s.Substring(0, 1).ToUpper() + s.Substring(1).ToLower() + " ");
+
+            return helper;
         }
 
         public static int ToArabic (this string str)
