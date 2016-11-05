@@ -63,4 +63,22 @@
         Don,
         Maestro
     }
+
+    enum TipoData
+    {
+        Nascita,
+        Morte
+    }
+
+    enum Mesi
+    {
+        NON_ASS = -1,
+        INVALIDO = 0,
+        Gennaio = 1,
+        Febbraio,
+        Marzo,
+        Aprile,
+        Maggio,
+        Giugno, Luglio, Agosto, Settembre, Ottobre, Novembre, Dicembre
+    }
 }

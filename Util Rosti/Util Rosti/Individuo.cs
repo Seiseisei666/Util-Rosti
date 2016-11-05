@@ -21,6 +21,7 @@ namespace Utility_Promus
         int id;
         string nome, cognome, provenienza;
         Attività attivitàPrevalente;
+        Data nascita, morte;
 
         //Campi pubblici
         public bool èMusicista { get; private set; }
@@ -66,7 +67,12 @@ namespace Utility_Promus
         List<string> nomiAlternativi;
         Titoli titolo;
 
-
+        public void SetData (Data data, TipoData tipo)
+        {
+            if (tipo == TipoData.Nascita)
+                nascita = data;
+            else morte = data;
+        }
         #endregion
 
     }

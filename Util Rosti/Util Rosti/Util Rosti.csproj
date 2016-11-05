@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Data.cs" />
     <Compile Include="enums.cs" />
+    <Compile Include="Extension Methods.cs" />
     <Compile Include="Individuo.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />

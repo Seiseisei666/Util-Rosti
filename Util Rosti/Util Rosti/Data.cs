@@ -19,6 +19,7 @@ namespace Utility_Promus
 		public Data ()
 		{
 		}
+
 		public Data(int g, int m, int a)
 		{
 			this.g = g;
@@ -26,10 +27,15 @@ namespace Utility_Promus
 			this.a = a;
 		}
 
-		public override string ToString ()
-		{
-			return string.Format ("[Data: G={0}, M={1}, A={2}]", G, M, A);
+        public override string ToString()
+        {
+            return string.Format("{0} {1} {2}", g, Enum.GetNames(typeof (Mesi))[m], a);
 		}
+
+        public string GG_MM_AAAA { get
+            {
+                return string.Format("{0}/{1}/{2}", g, m, a);
+            } }
 
 		/// <summary>
 		/// Cerca di leggere una data
@@ -37,22 +43,32 @@ namespace Utility_Promus
 		/// <returns><c>true</c>, if parse was tryed, <c>false</c> otherwise.</returns>
 		/// <param name="txt">stringa che contiene la data</param>
 		/// <param name="data">Data restituita</param>
-		public bool TryParse (string txt, out Data data)
+		public static bool TryParse (string txt, out Data data)
 		{
 			Match match;
-			int g, m, a;
-			foreach (string f in formati) {
-			
-				match = Regex.Match (txt, f);
-				if (match.Success) {
+			int g, a, m = -1;
+            for (int i = 0; i < Formati.Length; i++)
+            {
+                match = Regex.Match(txt, Formati[i]);
+                if (match.Success)
+                {
+                    g = int.Parse(match.Groups["g"].Value);
+                    a = int.Parse(match.Groups["a"].Value);
 
-					g = int.Parse (match.Groups [1].Value);
-					m = 0;
-					a = int.Parse (match.Groups [2].Value);
-
-					data = new Data (g, m, a);
-					return true;
-				}
+                    if (i == 0)
+                        m = match.Groups["m"].Value.ToArabic();
+                    else
+                    {
+                        
+                        foreach (Mesi mese in Enum.GetValues(typeof(Mesi)))
+                            if (match.Groups["m"].Value == mese.ToString())
+                            { m = (int)mese;  break; }
+                    }
+                    if (m == -1) throw new Exception("Data matchata correttamente, ma mese non assegnato");
+                    data = new Data(g, m, a);
+                    return true;
+                }
+           
 
 			}
 			data = null;
@@ -60,17 +76,18 @@ namespace Utility_Promus
 
 		}
 
-		static readonly string[] formati = {
-			GG + " " + mese + " " + AAAA,
-			GG + "." + XX + "." + AAAA,
-			ORD + "." + XX + "." + AAAA
-		};
 
-		static readonly string GG = @"(\d{1,2})";
-		static readonly string mese = @"";
-		static readonly string AAAA = @"(\d{4})";
-		static readonly string XX = @"([IVX]{1,4})";
-		static readonly string ORD = @"(\d)°";
+		public static readonly string[] Formati = {
+			@"(?<g>\d{1,2})°?\.(?<m>[IVX]{1,4})\.(?<a>\d{4})",
+
+			GG + @"\." + XX + @"\." + AAAA,
+            GG + @"\s" + mese + @"\s" + AAAA,
+        };
+
+		public static readonly string GG = @"(?<g>\d{1,2})°?";
+		public static readonly string mese = @"(?<m>(Gennaio)|(Febbraio)|(Marzo)|(Aprile)|(Maggio)|(Giugno)|(Luglio)|(Agosto)|(Settembre)|(Ottobre)|(Novembre)|(Dicembre))";
+		public static readonly string AAAA = @"(?<a>\d{4})";
+		public static readonly string XX = @"(?<m>[IVX]{1,4})";
 	
     }
 
