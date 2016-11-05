@@ -37,9 +37,9 @@ namespace Utility_Promus
         static readonly string COGNOME = @"^(?<cgn>[A-Z]+)\,?\s";
         static readonly string NOME = @"(?<nom>[\w\'\s]+)";
         static readonly string PARENTESI = @"\((?<contenuto>.*)\)[\s\.\;]*\r?\n";
-        static readonly string CORPO = @"(?<corpo>[.+(\r\n){1}]+)";
-        static readonly string FONTI = @"(F(onti|ONTI)\:\s)(?<fonti>[.+(\r\n){1}]+)";
-        static readonly string BIBLIOGRAFIA = @"(B(ibliografia|IBLIOGRAFIA)\:\s)(?<biblio>[.+(\r\n){1}]+)";
+        static readonly string CORPO = @"[\r\n]*(?<vox>[\w\W]+?[\.\n])(?<corpo>[\w\W]+)";
+        static readonly string FONTI = @"(F(onti|ONTI)\:\s)(?<fonti>[\w\W]+)";
+        static readonly string BIBLIOGRAFIA = @"(B(ibliografia|IBLIOGRAFIA)\:\s)(?<biblio>[\w\W]+)";
 
         readonly string [] FILTRI_PARAGRAFI = {
                 @"^\*[A-Z]", //Ricerca di luogo geografico (iniziante con *)
@@ -64,6 +64,34 @@ namespace Utility_Promus
         readonly string MATCH_DATA_MORTE = @"(?<data>\d{1,2}°?\.[IVX]+\.\d{4})†";
         readonly string MATCH_DATA_MORTE_NO_CROCE = @"\b[Nn]\..+?(\.|([eo]\s))\d{4}\s?-\s?ivi(\s-)?(?<data>\d{1,2}°?\.[IVX]+\.\d{4})";
 
+        #region ANALISI CORPO DEL TESTO
+        readonly string[] VOCI_O_STRUM =
+        {
+            "s", "a", "t", "b", "basso", "tenore", "contralto", "alto", "soprano", "cantore", "cantor", "organista", "sopran", "cantus"
+
+        };
+
+        readonly string[] DATI_ULTERIORI =
+        {
+            "puer", "cappellano", "compositore", "copista", "eunuco",
+        };
+
+        readonly string[] TERM_DI_PARENTELA =
+        {
+            "figlio", "padre", "parente", "fratello", "nipote", "cugino", 
+        };
+
+        readonly string[] SUCCESSIONE =
+        {
+            "anche", "poi"
+        };
+
+        readonly string[] STOP_LETTURA =
+        {
+            "presente", "appartenente",
+        };
+        #endregion
+
         readonly Regex fineParagrafo = new Regex(@"\r\n\r\n", RegexOptions.Compiled);
         readonly Regex cognome_e_nome = new Regex(COGNOME + NOME, RegexOptions.Compiled);
         readonly Regex regexParentesi = new Regex(PARENTESI, RegexOptions.Compiled);
@@ -72,6 +100,9 @@ namespace Utility_Promus
 
 
         List<Tuple<int, int>> indici;
+
+
+
 
 
         public Parser (string testo)
@@ -310,13 +341,51 @@ namespace Utility_Promus
         {
             //Locali
             Match match;
+            string filtro = CORPO;
+            string parola;
             bool fonti, biblio;
 
+            //Controllo presenza di fonti e/o bibliografia
             fonti = regexFonti.Match(paragrafo).Success;
             biblio = regexBiblio.Match(paragrafo).Success;
+
+            if (fonti) filtro += FONTI;
+            if (biblio) filtro += BIBLIOGRAFIA;
+
+            MatchCollection matches;
+
+            //Per questioni di efficienza converto la prima lettera in lowercase
+            string iniziale = paragrafo.First().ToString().ToLower();
+            paragrafo = iniziale + paragrafo.Substring(1);
+
+            //Analizzo TUTTE le parole della prima riga
+            match = Regex.Match(paragrafo, @"(?:\b(?<tgt>[sbta]|[\w]{3,})\b)"); //Qualsiasi parola singola con + di 3 lettere
+
+            //TODO:
+            /*  1) identifico una info (delimitate da ,|;) @"(?:<info>[^\,\;\.]+?)"
+             *  2) faccio il parsing parola per parola @"(?:<parola>[SBTA]|[\w]{3,})\b"
+             */ 
+            while (match.Success)
+            {
+                parola = match.Groups["tgt"].Value;
+                if (STOP_LETTURA.Contains(parola)) break;
+                else if (DATI_ULTERIORI.Contains(parola))
+                    individuo.AddNota(parola);
+                else if (VOCI_O_STRUM.Contains(parola))
+                {
+                    //Aggiunta voce
+
+                }
+                else if (TERM_DI_PARENTELA.Contains(parola))
+                {
+                    string grado_di_parentela = parola;
+                    match = match.NextMatch();
+                    if (match.Success) ;
+                }
+            }
+            
         }
-
-
+        
 
         /// <summary>
         /// Log a console e eventuale GESTIONE paragrafi scartati
