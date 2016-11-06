@@ -67,13 +67,13 @@ namespace Utility_Promus
         #region ANALISI CORPO DEL TESTO
         readonly string[] VOCI_O_STRUM =
         {
-            "s", "a", "t", "b", "basso", "tenore", "contralto", "alto", "soprano", "cantore", "cantor", "organista", "sopran", "cantus"
+            "s", "a", "t", "b", "basso", "tenore", "contralto", "alto", "soprano", "cantore", "cantor", "organista", "sopran", "cantus", "cantante", "sopranista", "compositore", "maestro"
 
         };
 
         readonly string[] DATI_ULTERIORI =
         {
-            "puer", "cappellano", "compositore", "copista", "eunuco",
+            "puer", "cappellano", "copista", "eunuco",
         };
 
         readonly string[] TERM_DI_PARENTELA =
@@ -295,7 +295,7 @@ namespace Utility_Promus
                 match = Regex.Match(parentesi, MATCH_DATA_NASCITA);
                 if (match.Success && Data.TryParse(match.Groups["data"].Value, out data))
                 {
-                    individuo.SetData(data, TipoData.Nascita);
+                    individuo.AddAttività("Nascita", TipoAttività.nascita, data);
                     Console.Write("\nNato nel {0}\t", data.ToString());
                 }
             }
@@ -316,7 +316,7 @@ namespace Utility_Promus
             if (morte && match.Success)
                 if (Data.TryParse(match.Groups["data"].Value, out data))
                 {
-                    individuo.SetData(data, TipoData.Morte);
+                    individuo.AddAttività("Morte", TipoAttività.morte, data);
                     Console.Write("Morto nel {0}", data.ToString());
                 }
                 else logErroreEstrazione(match.Groups["data"].Value, "Data morte illegibile");
@@ -353,36 +353,42 @@ namespace Utility_Promus
             if (biblio) filtro += BIBLIOGRAFIA;
 
             MatchCollection matches;
+            
+            //Ogni singola info è delimitata da , o ;
+            matches = Regex.Matches(paragrafo, @"(?<info>[\w\s'«»]+)[,;]+\s?");
 
-            //Per questioni di efficienza converto la prima lettera in lowercase
-            string iniziale = paragrafo.First().ToString().ToLower();
-            paragrafo = iniziale + paragrafo.Substring(1);
-
-            //Analizzo TUTTE le parole della prima riga
-            match = Regex.Match(paragrafo, @"(?:\b(?<tgt>[sbta]|[\w]{3,})\b)"); //Qualsiasi parola singola con + di 3 lettere
-
-            //TODO:
-            /*  1) identifico una info (delimitate da ,|;) @"(?:<info>[^\,\;\.]+?)"
-             *  2) faccio il parsing parola per parola @"(?:<parola>[SBTA]|[\w]{3,})\b"
-             */ 
-            while (match.Success)
+            foreach (Match m in matches)
             {
-                parola = match.Groups["tgt"].Value;
-                if (STOP_LETTURA.Contains(parola)) break;
-                else if (DATI_ULTERIORI.Contains(parola))
-                    individuo.AddNota(parola);
-                else if (VOCI_O_STRUM.Contains(parola))
-                {
-                    //Aggiunta voce
+                string info = m.Groups["info"].Value;
 
-                }
-                else if (TERM_DI_PARENTELA.Contains(parola))
-                {
-                    string grado_di_parentela = parola;
-                    match = match.NextMatch();
-                    if (match.Success) ;
-                }
+                //Analizzo TUTTE le parole della stringa di info
+                match = Regex.Match(info, @"(?:\b(?<word>[SBTA]|[\w]{3,})\b)"); //Qualsiasi parola singola con + di 3 lettere | S|A|T|B
+                
+                    parola = match.Groups["word"].Value;
+
+                    if (STOP_LETTURA.Contains(parola)) goto EXIT;
+
+                    else if (DATI_ULTERIORI.Contains(parola))
+                        individuo.AddNota(parola);
+                    else if (VOCI_O_STRUM.Contains(parola))
+                    {   //Se info è ad es. "S di Santa Maria Maggiore" mi copio TUTTA la stringa
+                        individuo.AddVoce_o_Strumento(info);
+                        continue; 
+                    }
+                    else if (TERM_DI_PARENTELA.Contains(parola))
+                    {
+                        string grado_di_parentela = parola;
+                        match = match.NextMatch();
+                        if (match.Success) ;
+                    }
+                
+
             }
+        EXIT:;
+
+
+
+            
             
         }
         
@@ -437,25 +443,32 @@ namespace Utility_Promus
 
 
 
-        //public List<string> Export ()
-        //{
+        public List<string> Export()
+        {
+
+            List<string> result = new List<string>(individui.Count);
+
+            foreach(Individuo ind in individui)
+            {
+                string helper = string.Format(
+    @"
+INDIVIDUO N.{0}: {1} - {2}{3}
+*Note*
+{4}
+",
+    ind.ID, ind.CognomeNome, ind.AttivitàPrevalente, " di " + ind.Provenienza, ind.Note);
+
+                if (ind.TutteAttività.Any())
+                {
+                    foreach (var s in ind.TutteAttività)
+                        helper += "\n" + s;
+                }
+
+                result.Add(helper);
+            }
             
-//            List<string> result = new List<string>(Nomi.Count);
-
-//            for (int i = 0; i < Nomi.Count; i++)
-//            {
-//                string formato = string.Format(
-//                    @"
-//INDIVIDUO N.{0}: {1} {2} ({3})
-//***INFO***
-//{4}
-//**********", 
-//                    i, Nomi[i], Cognomi[i], Parentesi[i], Corpo[i]);
-//                result.Add(formato);
-//            }
-
-//            return result;
-        //}
+            return result;
+        }
 
         public int Entries { get { return entries; } }
         public int EntriesOk { get { return entriesOk; } }

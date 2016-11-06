@@ -1,70 +1,13 @@
 ﻿namespace Utility_Promus
 {
-    enum Attività
-    {
-        NULL,
-        Contralto,
-        Sopranista,
-        Cantore,
-        cantante,
-        soprano_castrato,
-        organista,
-        strumentista,
-        basso,
-        compositore,
-        trombonista,
-        musico,
-        tubicinus,
-        cornettista,
-        violonista,
-        trombone,
-        pifferista,
-        arpista,
-        ceterista,
-        chitarrista,
-        clarinista,
-        trombettista,
-        cornetto,
-        cornista,
-        corno,
-        fagottista,
-        fagottitsa,
-        flautista,
-        traversiere,
-        liutista,
-        tiorbista,
-        Arciliutista,
-        liuto,
-        Violinista,
-        Contrabbassista,
-        Tromba,
-        Violoncellista,
-        Tenore,
-        Oboista,
-        Soprano,
-        Violista,
-        Organista,
-        Arretrato,
-        Baritono,
-        Flautista,
-        Clarino,
-        Serpentone,
-        Professore,
-        Maestro_di_musica,
-        Computista,
-        cantore,
-        Maestro_di_Cappella,
-        Basso,
-        Violone,
-    }
-
+    
     enum Titoli
     {
         Don,
         Maestro
     }
 
-    enum TipoData
+    enum TipoEvento
     {
         Nascita,
         Morte
@@ -80,5 +23,18 @@
         Aprile,
         Maggio,
         Giugno, Luglio, Agosto, Settembre, Ottobre, Novembre, Dicembre
+    }
+
+    enum TipoData
+    { prima_di = 1, sino_a, a_partire_da, dopo_il, il, intorno_a, tra};
+
+    enum TerminiDiParentela
+{
+    figlio, padre, fratello, nipote, cugino, parente
+        };
+
+    enum TipoAttività
+    {
+        nascita, morte, ingresso, uscita
     }
 }

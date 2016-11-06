@@ -250,3 +250,4 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+/Util Rosti/Util Rosti/Resources/individui (1).csv
