@@ -36,6 +36,13 @@ namespace Utility_Promus
             {
                 return string.Format("{0}/{1}/{2}", g, m, a);
             } }
+		public string Formato()
+		{
+			string formato = a+"/";
+			formato += ((m > 0 ? m.ToString() : "xx") + "/" + (g > 0 ? g.ToString() : "xx"));
+			return formato;
+		}
+
 
 		/// <summary>
 		/// Cerca di leggere una data

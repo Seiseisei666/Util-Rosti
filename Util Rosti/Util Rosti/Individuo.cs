@@ -5,11 +5,10 @@ using System.Text;
 using System.IO;
 
 
-
 namespace Utility_Promus
 {
    
-
+	[Serializable()]
     class Individuo
     {
         #region ***************TABELLA INDIVIDUI*************
