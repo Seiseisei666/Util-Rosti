@@ -52,7 +52,7 @@ namespace Utility_Promus
 		/// <param name="data">Data restituita</param>
 		public static bool TryParse (string txt, out Data data)
 		{
-			Match match;
+			Match match = null;
 			int g, a, m = 0;
 
 			foreach (Regex formato in Formati) {
@@ -62,8 +62,10 @@ namespace Utility_Promus
 					break;
 			}
 
-			if (!match.Success)
+			if (!match.Success) {
+				data = null;
 				return false;
+			}
 
 			a = match.Groups ["aaaa"].Success
 				? int.Parse (match.Groups ["aaaa"].Value)
@@ -82,6 +84,7 @@ namespace Utility_Promus
             }
 
 			data = new Data (g, m, a);
+			return true;
 		}
            
 
