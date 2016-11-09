@@ -41,7 +41,7 @@ namespace Utility_Promus
         {
             if (anno.Length != 4) throw new Exception(string.Format ("lunghezza stringa anno errata. Anno.Length: {0}",anno.Length));
             string s, d, a; int S, D, A;
-            s = anno.Substring(0, 2); if (!int.TryParse(s, out S)) { throw new Exception(string.Format("Prime due cifre dell'anno non valide. Anno:{0}", anno)); }
+            s = anno.Substring(0, 2); if (!int.TryParse(s, out S)) { throw new ArgumentException (string.Format("Prime due cifre dell'anno non valide. Anno:{0}", anno)); }
             d = anno.Substring(2, 1); if (!int.TryParse(d,out D)) { d = "x"; D = -1; }
             a = anno.Substring(3, 1); if (!int.TryParse(d, out A)) { a = "x"; A = -1; }
             this.anno_string = s + d + a;
@@ -102,9 +102,6 @@ namespace Utility_Promus
 				return false;
 			}
 
-			a = match.Groups ["aaaa"].Success
-				? int.Parse (match.Groups ["aaaa"].Value)
-				: 0;
 			g = match.Groups ["gg"].Success 
 				? int.Parse (match.Groups ["gg"].Value) 
 				: 0;
@@ -114,11 +111,21 @@ namespace Utility_Promus
 			else if (match.Groups["mese"].Success)
 			{
 				foreach (Mesi mese in Enum.GetValues(typeof(Mesi)))
-                if (match.Groups["m"].Value == mese.ToString())
+                if (match.Groups["mese"].Value.ToCapitalCase() == mese.ToString())
 					{ m = (int)mese;  break; }
             }
 
-			data = new Data (g, m, a);
+            if (int.TryParse (match.Groups["aaaa"].Value, out a))
+                data = new Data (g, m, a);
+            else try
+                {
+                    data = new Data(g, m, match.Groups["aaaa"].Value);
+                }
+                catch (ArgumentException)
+                {
+                    data = null;
+                    return false;
+                }
 			return true;
 		}
            
@@ -127,15 +134,15 @@ namespace Utility_Promus
 		{
 			new Regex (GG + _P + XX + _P + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
 			new Regex (GG + _S + MESE + _S + AAAA , RegexOptions.Compiled), // GG Mese AAAA
-			new Regex (_S + MESE + @"\s(?:del(?:\s|l'))?" + AAAA , RegexOptions.Compiled), // Mese [del] AAAA
+			new Regex (_S + MESE + @"\s(?:del(?:\s|l'anno\s))?" + AAAA , RegexOptions.Compiled), // Mese [del] AAAA
 		};
 
 
 		public static readonly string _S = @"\s";
 		public static readonly string _P = @"\.";
 		public static readonly string GG = @"(?<gg>\d{1,2})°?";
-		public static readonly string MESE = @"(?i:(?<mese>[gfmalsond]\w+(?:(?:[rl]e)|(?:[iznt]o))))\b";
-		public static readonly string AAAA = @"(?<aaaa>\d{4})";
+		public static readonly string MESE = @"(?i:(?<mese>[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\b";
+		public static readonly string AAAA = @"(?<aaaa>\d{2}[\d\.?]{2})\b";
 		public static readonly string XX = @"(?<xx>[IVX]{1,4})";
 	
     }
