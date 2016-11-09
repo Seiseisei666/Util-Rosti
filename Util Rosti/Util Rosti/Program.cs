@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CsvHelper;
@@ -11,9 +13,11 @@ namespace Utility_Promus
 {
     class Program
     {
+        static readonly Dictionary<Tuple<string, string>, string> Tabelle_Helper;
 
         static readonly string pathDbIndividui = @"Resources\individui (1).csv";
         static readonly string pathDbAttività = @"Resources\attivita.csv";
+        string pathDbHelper = "xtabserv.dat";
         static readonly string header = @"
          ___________________________________
         ***********************************)
@@ -34,8 +38,8 @@ namespace Utility_Promus
 
         }
 
-        
-        static void Parse (string filename)
+
+        static void Parse(string filename)
         {
             bool b = Regex.IsMatch(filename, @"\w\.txt");
             if (!b)
@@ -43,7 +47,7 @@ namespace Utility_Promus
                 Console.WriteLine("ATTENZIONE: File non valido o inesistente");
                 GetSelection();
             }
-                
+
 
             string file = string.Empty;
 
@@ -57,7 +61,7 @@ namespace Utility_Promus
                     Console.WriteLine("File non trovato!");
                 GetSelection();
             }
-            
+
             Console.WriteLine("Completata lettura; caricato dizionario da {0} caratteri.", file.Length);
 
 
@@ -101,7 +105,7 @@ namespace Utility_Promus
 
         }
 
-        static void GetSelection ()
+        static void GetSelection()
         {
             string txt = @"
 
@@ -137,10 +141,46 @@ namespace Utility_Promus
 
         }
 
-        static void LoadDb (string path, bool individui)
+        static void LoadDb(string path, bool individui)
         {
 
         }
+
+        static void LoadHelperTables(string file)
+        {
+            Dictionary<Tuple<string, string>, string> output = new Dictionary<Tuple<string, string>, string>();
+            StreamReader stream = new StreamReader(file);
+            CsvReader reader = new CsvReader(stream);
+            reader.Configuration.Delimiter = "#";
+
+            while (reader.Read())
+            {
+                string codice, descrizione, tabella;
+
+                tabella = reader.GetField("XCODTAB");
+                codice = reader.GetField("XCODELE");
+                descrizione = reader.GetField("XDESCELE");
+
+                output.Add(new Tuple<string, string>(tabella, descrizione), codice);
+            }
+
+            using (FileStream fs = new FileStream("xtabserv.dat", FileMode.Create))
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+
+                try
+                {
+                    bf.Serialize(fs, output);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("ERRORE: Impossibile salvare i dati su file. Messaggio di errore: {0}", ex.Message);
+                }
+
+            }
+
+        }
+
 
     }
 }
