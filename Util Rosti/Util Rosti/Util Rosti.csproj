@@ -52,6 +52,7 @@
     <Compile Include="Extension Methods.cs" />
     <Compile Include="Individuo.cs" />
     <Compile Include="Info_Parentela.cs" />
+    <Compile Include="MatchFoundEvntArgs.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -71,6 +72,10 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Properties\filtri.txt" />
+    <None Include="Resources\filtri.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

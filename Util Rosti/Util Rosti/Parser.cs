@@ -24,6 +24,7 @@ namespace Utility_Promus
         List<Individuo> individui;
 
         List<string> nomiAlt;
+        List<Info_Parentela> parenteleDaVerificare;
 
         Individuo individuo;
         string paragrafo, nome, cognome, floruit;
@@ -37,7 +38,7 @@ namespace Utility_Promus
         static readonly string COGNOME = @"^(?<cgn>[A-Z]+)\,?\s";
         static readonly string NOME = @"(?<nom>[\w\'\s]+)";
         static readonly string PARENTESI = @"\((?<contenuto>.*)\)[\s\.\;]*\r?\n";
-        static readonly string CORPO = @"[\r\n]*(?<vox>[\w\W]+?[\.\n])(?<corpo>[\w\W]+)";
+        static readonly string CORPO = @"(?<corpo>[\w\W]+)";
         static readonly string FONTI = @"(F(onti|ONTI)\:\s)(?<fonti>[\w\W]+)";
         static readonly string BIBLIOGRAFIA = @"(B(ibliografia|IBLIOGRAFIA)\:\s)(?<biblio>[\w\W]+)";
 
@@ -113,6 +114,8 @@ namespace Utility_Promus
 			fineParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
+
+            Pattern.MatchFound += parseInfo;
 
             defineParagraphs();
 
@@ -198,6 +201,7 @@ namespace Utility_Promus
 
             //Init
             entriesOk = 0;
+            parenteleDaVerificare = new List<Info_Parentela>();
 
             foreach (var id in indici)
             {
@@ -345,20 +349,18 @@ namespace Utility_Promus
             string parola;
             bool fonti, biblio;
 
-            //Controllo presenza di fonti e/o bibliografia
-            fonti = regexFonti.Match(paragrafo).Success;
-            biblio = regexBiblio.Match(paragrafo).Success;
-
-            if (fonti) filtro += FONTI;
-            if (biblio) filtro += BIBLIOGRAFIA;
 
             MatchCollection matches;
-            
+
+            //************** Analizzo fino al primo ritorno a capo: 
+            //Info Voce, parentele, altre notizie semplic
             //Ogni singola info è delimitata da , o ;
             matches = Regex.Matches(paragrafo, @"(?<info>[\w\s'«»]+)[,;]+\s?");
+            int fine = 0;
 
             foreach (Match m in matches)
             {
+                fine = m.Index + m.Length;
                 string info = m.Groups["info"].Value;
 
                 //Analizzo TUTTE le parole della stringa di info
@@ -366,32 +368,53 @@ namespace Utility_Promus
                 
                     parola = match.Groups["word"].Value;
 
-                    if (STOP_LETTURA.Contains(parola)) goto EXIT;
+                if (STOP_LETTURA.Contains(parola)) goto EXIT;
 
-                    else if (DATI_ULTERIORI.Contains(parola))
-                        individuo.AddNota(parola);
-                    else if (VOCI_O_STRUM.Contains(parola))
-                    {   //Se info è ad es. "S di Santa Maria Maggiore" mi copio TUTTA la stringa
-                        individuo.AddVoce_o_Strumento(info);
-                        continue; 
-                    }
-                    else if (TERM_DI_PARENTELA.Contains(parola))
-                    {
-                        string grado_di_parentela = parola;
-                        match = match.NextMatch();
-                        if (match.Success) ;
-                    }
+                else if (VOCI_O_STRUM.Contains(parola))
+                {   //Se info è ad es. "S di Santa Maria Maggiore" mi copio TUTTA la stringa
+                    individuo.AddVoce_o_Strumento(info);
+                    continue;
+                }
+                else if (SUCCESSIONE.Contains(parola) || DATI_ULTERIORI.Contains(parola))
+                {
+                    individuo.AddNota(info);
+                    continue;
+                }
+                    
+                else if (TERM_DI_PARENTELA.Contains(parola))
+                {
+                    individuo.AddNota(info);
+                    continue;
+                }
                 
 
             }
         EXIT:;
 
+            //**** Qua comincia l'analisi del corpo del testo
 
+            paragrafo = paragrafo.Substring(fine);
+            //Controllo presenza di fonti e/o bibliografia
+            fonti = regexFonti.Match(paragrafo).Success;
+            biblio = regexBiblio.Match(paragrafo).Success;
 
-            
-            
+            if (fonti) filtro += FONTI;
+            if (biblio) filtro += BIBLIOGRAFIA;
+            string corpo = Regex.Match(paragrafo, filtro).Groups["corpo"].Value;
+
+            MatchCollection singoleInfo = Regex.Matches(corpo, @"[\w\W]+?[^\s]\.\s");
+
+            foreach (Match singolaInfo in singoleInfo)
+            {
+                Pattern.TryMatch(singolaInfo.Value);
+            }
+
         }
-        
+
+        void parseInfo(object s, MatchFoundEvntArgs args)
+        {
+            Match infoEstratte = args.Corrispondenza;
+        }
 
         /// <summary>
         /// Log a console e eventuale GESTIONE paragrafi scartati

@@ -13,7 +13,7 @@ namespace Utility_Promus
 {
     class Program
     {
-        static readonly Dictionary<Tuple<string, string>, string> Tabelle_Helper;
+        public static Dictionary<Tuple<string, string>, string> Tabelle_Helper { get; private set; }
 
         static readonly string pathDbIndividui = @"Resources\individui (1).csv";
         static readonly string pathDbAttività = @"Resources\attivita.csv";
