@@ -10,9 +10,11 @@ namespace Utility_Promus
     public class MatchFoundEvntArgs:EventArgs
     {
         public Match Corrispondenza { get; private set; }
-        public MatchFoundEvntArgs (Match m)
+        public TipoData tipoDataEvento { get; private set; }
+        public MatchFoundEvntArgs (Match m, TipoData tipo)
         {
             Corrispondenza = m;
+            tipoDataEvento = tipo;
         }
     }
 }

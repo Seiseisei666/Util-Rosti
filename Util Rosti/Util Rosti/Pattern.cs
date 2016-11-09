@@ -9,13 +9,13 @@ namespace Utility_Promus
 	{
 
         static readonly string _FINE_INFO = @"\s|[\r\n]";
-        static readonly string _GGMMAA ="";
-        static readonly string _AAAA = @"[\.\s](?<anno>\d\d[\d.?]{2})[\.\s]";
-        static readonly string _MESE = @"";
+        static readonly string _GGMMAA = Data.GG+Data._P_OR_S+Data.XX + Data._P_OR_S+Data.AAAA;
+        static readonly string _AAAA = Data.AAAA;
+        static readonly string _MESE = Data.MESE;
         static readonly string _TESTO = @"(?<testo>.+?)";
-        static readonly string _GGmeseAAAA = @"";
+        static readonly string _GGmeseAAAA = Data.GG + Data._P_OR_S + Data.MESE + Data._P_OR_S + Data.AAAA;
 
-		Regex regex;
+        Regex regex;
 		Pattern[] children;
         string tipoEvento;
         TipoData tipo;
@@ -27,34 +27,20 @@ namespace Utility_Promus
 			regex = new Regex (pattern, RegexOptions.Compiled);
 			this.children = children;
             this.tipo = tipo;
+            if (tipo != TipoData.NA)
+                foreach (var p in children)
+                    p.setTipo(tipo);
 		}
 
-
+        void setTipo(TipoData tipo)
+        {
+            this.tipo = tipo;
+        }
 
 
 		static Pattern [] _patterns ()
         {
 
-            /*
-            \na.\s ? +_Data_ + (?< testo >.+?) + _Fine_info_ +#5
-\nd.\s ? +_Data_ + (?< testo > +?) + _Fine_info_ +#5
-
-\b(?:prima\sd(?:i | el) | entro\s(?:il\s | la\s | l'))#?
-\s + _Data_ + _Capture_ + _Fine_info_ +#1
-\s + _Mese_ + (?: d(?:i | el))\s + _Anno_ + _Capture_ + _Fine_info_ +#1
-\b(?:[sf]ino\sal ?| entro\s(?:il | la\s | l'))#?
-\s + _Data_ + _Capture_ + _Fine_info_ +#1
-\s + _Mese_ + (?: d(?:i | el))\s + _Anno_ + _Capture_ + _Fine_info_ +#1
-
-\b(?:a\spartire\sdal ?| dopo\s(?:il | la\s | l'))#?
-\s + _Data_ + _Capture_ + _Fine_info_ +#1
-\s + _Mese_ + (?: d(?:i | el))\s + _Anno_ + _Capture_ + _Fine_info_ +#1
-dopo il
-il 
-intorno a
-tra
-			
-    */
             var data_txt_fine = new Pattern(@"\s" + _GGMMAA + _TESTO + _FINE_INFO);
             var gg_mese_anno_txt_fine = new Pattern(@"[\s']" + _GGmeseAAAA + _TESTO + _FINE_INFO);
             var mese_anno_txt_fine = new Pattern(@"\s" + _MESE + @"(?:di|del)\s" + _AAAA + _TESTO + _FINE_INFO);
@@ -83,27 +69,30 @@ tra
             else return "presenza";
         }
 
-
-		bool _tryMatch (string stringa, Pattern rif = null, int startPos = 0)
+        static bool running;
+        void _tryMatch (string stringa, Pattern rif = null, int startPos = 0)
 		{
             Match match;
             Pattern caller = rif == null ? this : rif;
 
 			match = this.regex.Match (stringa, startPos);
 
-			if (match.Success)
+			if (match.Success && running)
             {
-                if (children.Any())
+                if (children.Any() && running)
                 {
                     int offset = match.Groups["pos"].Index + match.Groups["pos"].Length;
                     match = null;
                     foreach (Pattern p in children)
                         p._tryMatch(stringa, caller, startPos = offset);
                 }
-                else MatchFound.Invoke(this, new MatchFoundEvntArgs(match));
+                else
+                {
+                    MatchFound.Invoke(this, new MatchFoundEvntArgs(match, this.tipo));
+                    running = false;
+                }
             }
 
-			return (match.Success);
 		}
 
 
@@ -111,7 +100,7 @@ tra
 		{
 			foreach (Pattern p in _patterns()) 
 			{
-				p._tryMatch(stringa);
+				if (running) p._tryMatch(stringa);
 			}
 
 		}

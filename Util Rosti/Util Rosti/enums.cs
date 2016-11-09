@@ -25,7 +25,7 @@
         Giugno, Luglio, Agosto, Settembre, Ottobre, Novembre, Dicembre
     }
 
-    enum TipoData
+    public enum TipoData
     { NA= 0, prima_di = 1, sino_a, a_partire_da, dopo_il, il, intorno_a, tra};
 
     enum TerminiDiParentela

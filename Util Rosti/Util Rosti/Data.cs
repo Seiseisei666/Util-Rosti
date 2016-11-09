@@ -132,17 +132,18 @@ namespace Utility_Promus
 
 		public static readonly Regex [] Formati = 
 		{
-			new Regex (GG + _P + XX + _P + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
-			new Regex (GG + _S + MESE + _S + AAAA , RegexOptions.Compiled), // GG Mese AAAA
+			new Regex (GG + _P_OR_S + XX + _P_OR_S + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
+			new Regex (GG + _P_OR_S + MESE + _P_OR_S + AAAA , RegexOptions.Compiled), // GG Mese AAAA
 			new Regex (_S + MESE + @"\s(?:del(?:\s|l'anno\s))?" + AAAA , RegexOptions.Compiled), // Mese [del] AAAA
 		};
 
 
 		public static readonly string _S = @"\s";
 		public static readonly string _P = @"\.";
+        public static readonly string _P_OR_S = @"[\s\.]{1,2}";
 		public static readonly string GG = @"(?<gg>\d{1,2})°?";
 		public static readonly string MESE = @"(?i:(?<mese>[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\b";
-		public static readonly string AAAA = @"(?<aaaa>\d{2}[\d\.?]{2})\b";
+		public static readonly string AAAA = @"(?<aaaa>\d\d[\d\.?]{2})\b";
 		public static readonly string XX = @"(?<xx>[IVX]{1,4})";
 	
     }

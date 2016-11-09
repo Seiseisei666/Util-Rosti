@@ -410,7 +410,11 @@ namespace Utility_Promus
             }
 
         }
-
+        /// <summary>
+        /// Invocato dall'evento Pattern.TryMatch
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="args"></param>
         void parseInfo(object s, MatchFoundEvntArgs args)
         {
             Match infoEstratte = args.Corrispondenza;

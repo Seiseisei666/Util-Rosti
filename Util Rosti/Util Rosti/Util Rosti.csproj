@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attività.cs" />
+    <Compile Include="CSVField.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="Extension Methods.cs" />
@@ -62,6 +63,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Pattern.cs" />
+    <Compile Include="TabellaDB.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -75,7 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Properties\filtri.txt" />
-    <None Include="Resources\filtri.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

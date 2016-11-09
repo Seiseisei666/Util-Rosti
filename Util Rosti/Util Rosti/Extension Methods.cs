@@ -19,7 +19,7 @@ namespace Utility_Promus
             foreach (string s in allWrds)
                 if (s.Length > 1)
                     helper = helper + (s.Substring(0, 1).ToUpper() + s.Substring(1).ToLower() + " ");
-                else helper = helper + s;
+                else helper = helper + s.ToUpper() + " ";
 
             return helper;
         }
