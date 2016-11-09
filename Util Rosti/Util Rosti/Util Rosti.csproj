@@ -47,7 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attività.cs" />
-    <Compile Include="CSVManager.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="Extension Methods.cs" />

@@ -22,7 +22,23 @@ namespace Utility_Promus
         TipoData tipoInizio, tipoFine;
 
         Data inizioMin, inizioMax, fineMin, fineMax;
-        Data iniMinLav, iniMaxLav, fineMinLav, fineMaxLav;
+        //Data iniMinLav, iniMaxLav, fineMinLav, fineMaxLav;
+
+        public Data getDataLav(bool min, bool ini = true)
+        {
+            if (puntuale)
+            {
+                if (min) return inizioMin.Inizio;
+                else return inizioMax.Fine;
+            }
+            else
+            {
+                if (min && ini) return inizioMin.Inizio;
+                else if (min && !ini) return inizioMax.Inizio;
+                else if (!min && ini) return fineMin.Inizio;
+                else return fineMax.Inizio;
+            }
+        }
 
         /// <summary>
         /// Costruttore evento con data puntuale
