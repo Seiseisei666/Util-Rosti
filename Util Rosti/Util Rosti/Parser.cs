@@ -46,7 +46,8 @@ namespace Utility_Promus
 				@"^[^=^\n^\r]+\=", //Ricerca di '='
 				@"^[^\[^\n^\r]+\[", //Ricerca di 'Nome ['
 				@"^[A-Z][a-z]+[\,\s]{1,2}[A-Z]+", //Ricerca di nome COGNOME oppure nome, COGNOME
-                @"^\(" //Ricerca di "(in ordine cronologico)"
+                @"^\(", //Ricerca di "(in ordine cronologico)"
+				@"^[A-Z]$" //Ricerca di inizio lettera
             };
 
 
@@ -55,7 +56,7 @@ namespace Utility_Promus
            // @"\d{4}-\d{4})", //AAAA-AAAA
             @"\d{4}(ca\.)?-\d{4})", //AAAA{ca.}-AAAA
             @"\d{4}ca\.)", //AAAAca.
-            @"\d{2,3}\?+)", //AAA? o AA??
+			@"\d\d[\d\?]{2}|\d\d[\d\.]{2}", //AAA? o AA??
             @"\d{4})", //AAAA
         };
 
@@ -108,7 +109,8 @@ namespace Utility_Promus
         public Parser (string testo)
         {
             this.testo = testo;
-			fineParagrafo = new Regex(@"\r\n\r\n", RegexOptions.Compiled);
+			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
+			fineParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 
@@ -133,16 +135,14 @@ namespace Utility_Promus
 
             while (match.Success)
             {
-                lunghezzaPar = match.Index - inizioPar;
-
-                paragrafo = testo.Substring(inizioPar, lunghezzaPar);
+				
+				paragrafo = match.Groups["txt"].Value;
 
                 if (isParagraphValid(paragrafo))
-                    indici.Add(new Tuple<int, int>(inizioPar, lunghezzaPar));
+					indici.Add(new Tuple<int, int>(match.Index, match.Length));
 
-                inizioPar = match.Index + 4;
 
-                // Progress bar..........
+				// Progress bar..........
                 if (progress < (match.Index * 100f / testo.Length))
                 {
                     Console.Write('*');
@@ -153,7 +153,7 @@ namespace Utility_Promus
                 entries++;
             }
             //HACK Aggiungo l'ultima entry
-            paragrafo = testo.Substring(inizioPar, testo.Length - inizioPar);
+			paragrafo = testo.Substring(indici.Last().Item1+indici.Last().Item2);
 
             if (isParagraphValid(paragrafo))
                 indici.Add(new Tuple<int, int>(inizioPar, testo.Length - inizioPar));

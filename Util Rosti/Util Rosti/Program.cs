@@ -116,7 +116,7 @@ namespace Utility_Promus
 
     :>";
             Console.Write(txt);
-            var args = Console.ReadLine();
+            var args = "a dizionario.txt";
 
             string cmd; string param;
             cmd = args.Substring(0, 1);

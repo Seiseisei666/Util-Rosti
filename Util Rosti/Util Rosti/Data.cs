@@ -36,6 +36,13 @@ namespace Utility_Promus
             {
                 return string.Format("{0}/{1}/{2}", g, m, a);
             } }
+		public string Formato()
+		{
+			string formato = a+"/";
+			formato += ((m > 0 ? m.ToString() : "xx") + "/" + (g > 0 ? g.ToString() : "xx"));
+			return formato;
+		}
+
 
 		/// <summary>
 		/// Cerca di leggere una data
@@ -45,49 +52,56 @@ namespace Utility_Promus
 		/// <param name="data">Data restituita</param>
 		public static bool TryParse (string txt, out Data data)
 		{
-			Match match;
-			int g, a, m = -1;
-            for (int i = 0; i < Formati.Length; i++)
-            {
-                match = Regex.Match(txt, Formati[i]);
-                if (match.Success)
-                {
-                    g = int.Parse(match.Groups["g"].Value);
-                    a = int.Parse(match.Groups["a"].Value);
+			Match match = null;
+			int g, a, m = 0;
 
-                    if (i == 0)
-                        m = match.Groups["m"].Value.ToArabic();
-                    else
-                    {
-                        
-                        foreach (Mesi mese in Enum.GetValues(typeof(Mesi)))
-                            if (match.Groups["m"].Value == mese.ToString())
-                            { m = (int)mese;  break; }
-                    }
-                    if (m == -1) throw new Exception("Data matchata correttamente, ma mese non assegnato");
-                    data = new Data(g, m, a);
-                    return true;
-                }
+			foreach (Regex formato in Formati) {
+
+				match = formato.Match (txt);
+				if (match.Success)
+					break;
+			}
+
+			if (!match.Success) {
+				data = null;
+				return false;
+			}
+
+			a = match.Groups ["aaaa"].Success
+				? int.Parse (match.Groups ["aaaa"].Value)
+				: 0;
+			g = match.Groups ["gg"].Success 
+				? int.Parse (match.Groups ["gg"].Value) 
+				: 0;
+
+			if (match.Groups ["xx"].Success)
+				m = match.Groups ["xx"].Value.ToArabic ();
+			else if (match.Groups["mese"].Success)
+			{
+				foreach (Mesi mese in Enum.GetValues(typeof(Mesi)))
+                if (match.Groups["m"].Value == mese.ToString())
+					{ m = (int)mese;  break; }
+            }
+
+			data = new Data (g, m, a);
+			return true;
+		}
            
 
-			}
-			data = null;
-			return false;
+		public static readonly Regex [] Formati = 
+		{
+			new Regex (GG + _P + XX + _P + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
+			new Regex (GG + _S + MESE + _S + AAAA , RegexOptions.Compiled), // GG Mese AAAA
+			new Regex (_S + MESE + @"\s(?:del(?:\s|l'))?" + AAAA , RegexOptions.Compiled), // Mese [del] AAAA
+		};
 
-		}
 
-
-		public static readonly string[] Formati = {
-			@"(?<g>\d{1,2})°?\.(?<m>[IVX]{1,4})\.(?<a>\d{4})",
-
-			GG + @"\." + XX + @"\." + AAAA,
-            GG + @"\s" + mese + @"\s" + AAAA,
-        };
-
-		public static readonly string GG = @"(?<g>\d{1,2})°?";
-		public static readonly string mese = @"(?<m>(Gennaio)|(Febbraio)|(Marzo)|(Aprile)|(Maggio)|(Giugno)|(Luglio)|(Agosto)|(Settembre)|(Ottobre)|(Novembre)|(Dicembre))";
-		public static readonly string AAAA = @"(?<a>\d{4})";
-		public static readonly string XX = @"(?<m>[IVX]{1,4})";
+		public static readonly string _S = @"\s";
+		public static readonly string _P = @"\.";
+		public static readonly string GG = @"(?<gg>\d{1,2})°?";
+		public static readonly string MESE = @"(?i:(?<mese>[gfmalsond]\w+(?:(?:[rl]e)|(?:[iznt]o))))\b";
+		public static readonly string AAAA = @"(?<aaaa>\d{4})";
+		public static readonly string XX = @"(?<xx>[IVX]{1,4})";
 	
     }
 
