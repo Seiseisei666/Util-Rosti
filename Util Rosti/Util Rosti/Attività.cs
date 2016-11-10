@@ -59,7 +59,7 @@ namespace Utility_Promus
         {
             if (puntuale && fineMin == null && fineMax == null)
             {
-                return tipoInizio.ToString().ToCapitalCase() + inizioMin.ToString() + ": '" + descrizione + "'" + tipo.ToString();
+                return tipoInizio.ToString().ToCapitalCase() + inizioMin.ToString() + ": '" + descrizione + "'";
             }
 
             else

@@ -8,7 +8,7 @@ namespace Utility_Promus
 	public class Pattern
 	{
 
-        static readonly string _FINE_INFO = @"\s|[\r\n]";
+		static readonly string _FINE_INFO = @"\.(?:\s[A-Z]|\r?\n)";
         static readonly string _GGMMAA = Data.GG+Data._P_OR_S+Data.XX + Data._P_OR_S+Data.AAAA;
         static readonly string _AAAA = Data.AAAA;
         static readonly string _MESE = Data.MESE;
@@ -19,7 +19,7 @@ namespace Utility_Promus
 		Pattern[] children;
         string tipoEvento;
         TipoData tipo;
-
+		Match matchInfo;
 
 
 		private Pattern (string pattern, TipoData tipo= TipoData.NA, params Pattern[] children)
@@ -41,9 +41,9 @@ namespace Utility_Promus
 		static Pattern [] _patterns ()
         {
 
-            var data_txt_fine = new Pattern(@"\s" + _GGMMAA + _TESTO + _FINE_INFO);
-            var gg_mese_anno_txt_fine = new Pattern(@"[\s']" + _GGmeseAAAA + _TESTO + _FINE_INFO);
-            var mese_anno_txt_fine = new Pattern(@"\s" + _MESE + @"(?:di|del)\s" + _AAAA + _TESTO + _FINE_INFO);
+            var data_txt_fine = new Pattern(@".*" + _GGMMAA + _TESTO + _FINE_INFO);
+            var gg_mese_anno_txt_fine = new Pattern(@".*" + _GGmeseAAAA + _TESTO + _FINE_INFO);
+            var mese_anno_txt_fine = new Pattern(@".*" + _MESE + @"(?:di|del)\s" + _AAAA + _TESTO + _FINE_INFO);
             var chldrn = new Pattern[] { data_txt_fine, gg_mese_anno_txt_fine, mese_anno_txt_fine };
 
 
@@ -69,35 +69,41 @@ namespace Utility_Promus
             else return "presenza";
         }
 
-        static bool running;
-        void _tryMatch (string stringa, Pattern rif = null, int startPos = 0)
+ 
+		void _tryMatch (string stringa, Pattern riferimento = null, int startPos = 0)
 		{
             Match match;
-            Pattern caller = rif == null ? this : rif;
+			Pattern padre = 
+				riferimento == null 
+				? this 
+				: riferimento;
 
 			match = this.regex.Match (stringa, startPos);
 
-			if (match.Success && running)
+			if (match.Success)
             {
-                if (children.Any() && running)
-                {
-                    int offset = match.Groups["pos"].Index + match.Groups["pos"].Length;
-                    match = null;
-                    foreach (Pattern p in children)
-                        p._tryMatch(stringa, caller, startPos = offset);
-                }
-                else
-                {
-                    MatchFound.Invoke(this, new MatchFoundEvntArgs(match, this.tipo));
-                    running = false;
+				if (children.Any () && running) {
+					while (match.Success) {
+						int offset = match.Groups ["pos"].Index + match.Groups ["pos"].Length;
+						//match = null;
+						foreach (Pattern p in children)
+							p._tryMatch (stringa, padre, startPos = offset);
+						match = match.NextMatch ();
+					}
+                    
+				} else if (!children.Any () && running) {
+					MatchFound.Invoke (this, new MatchFoundEvntArgs (match, this.tipo));
+					running = false;
+				}
                 }
             }
 
-		}
 
 
+		static bool running;
 		public static void TryMatch (string stringa)
 		{
+			running = true;
 			foreach (Pattern p in _patterns()) 
 			{
 				if (running) p._tryMatch(stringa);

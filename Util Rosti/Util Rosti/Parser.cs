@@ -30,7 +30,7 @@ namespace Utility_Promus
         string paragrafo, nome, cognome, floruit;
         Data dataNascita, dataMorte;
         string[] luoghiDiOrigine;
-
+		List<Match> informazioni;
         // Filtri Paragrafo ---------------------------------------
         //HACK: controllare eccezioni ("COGNOME o VARIANTE", 
         // in un secondo momento anche i NOMI GENERICI tipo "Bernardino [I]
@@ -57,14 +57,14 @@ namespace Utility_Promus
            // @"\d{4}-\d{4})", //AAAA-AAAA
             @"\d{4}(ca\.)?-\d{4})", //AAAA{ca.}-AAAA
             @"\d{4}ca\.)", //AAAAca.
-			@"\d\d[\d\?]{2}|\d\d[\d\.]{2}", //AAA? o AA??
+			@"\d\d[\d\?]{2}|\d\d[\d\.]{2})", //AAA? o AA??
             @"\d{4})", //AAAA
         };
 
         readonly string MATCH_NASCITA = @"\bn\.";
         readonly string MATCH_DATA_NASCITA = @"\b[Nn]\..+?(?<data>\d{1,2}°?\..+?\d{4})";
         readonly string MATCH_DATA_MORTE = @"(?<data>\d{1,2}°?\.[IVX]+\.\d{4})†";
-        readonly string MATCH_DATA_MORTE_NO_CROCE = @"\b[Nn]\..+?(\.|([eo]\s))\d{4}\s?-\s?ivi(\s-)?(?<data>\d{1,2}°?\.[IVX]+\.\d{4})";
+		readonly string MATCH_DATA_MORTE_NO_CROCE = @"\b[Nn]\..+?(\.|([eo]\s))\d{4}\s?-\s?ivi(\s-)?(?<data>\d{1,2}°?[\.\s]{1,3}[IVX]{1,4}[\.\s]{1,3}\d{2}[\d\.?]{2})";
 
         #region ANALISI CORPO DEL TESTO
         readonly string[] VOCI_O_STRUM =
@@ -216,11 +216,10 @@ namespace Utility_Promus
 
                 individuo = new Individuo(nome, cognome);
 
-                if (!analizzaParentesi())
-                    ;
+				analizzaParentesi ();
 
                 
-               
+				analizzaCorpo ();
 
                 //Export
                 individui.Add(individuo);
@@ -303,7 +302,7 @@ namespace Utility_Promus
                     Console.Write("\nNato nel {0}\t", data.ToString());
                 }
             }
-
+			match = null;
             //Cerco segnalatori di presenza data morte
             bool morte = false;
             if ( Regex.Match(parentesi, @"†").Success)
@@ -317,7 +316,7 @@ namespace Utility_Promus
                 morte = true;
             }
 
-            if (morte && match.Success)
+			if (morte && match!=null && match.Success)
                 if (Data.TryParse(match.Groups["data"].Value, out data))
                 {
                     individuo.AddAttività("Morte", TipoAttività.morte, data);
@@ -350,23 +349,23 @@ namespace Utility_Promus
             bool fonti, biblio;
 
 
-            MatchCollection matches;
+            MatchCollection matchFrase;
 
             //************** Analizzo fino al primo ritorno a capo: 
             //Info Voce, parentele, altre notizie semplic
             //Ogni singola info è delimitata da , o ;
-            matches = Regex.Matches(paragrafo, @"(?<info>[\w\s'«»]+)[,;]+\s?");
+			matchFrase = Regex.Matches(Regex.Match(paragrafo,@".*\r?\n").Value, @"(?<info>[\w\s'«»]+?)[,;\.]");
             int fine = 0;
 
-            foreach (Match m in matches)
-            {
+			foreach (Match m in matchFrase)
+			{	
                 fine = m.Index + m.Length;
-                string info = m.Groups["info"].Value;
+				string info = m.Groups["info"].Value; //Tutta la riga di intestazione (dopo nome cogn e parentesi)
 
                 //Analizzo TUTTE le parole della stringa di info
-                match = Regex.Match(info, @"(?:\b(?<word>[SBTA]|[\w]{3,})\b)"); //Qualsiasi parola singola con + di 3 lettere | S|A|T|B
+                match = Regex.Match(info, @"(?:\b(?<word>[SBTA][\s\.]|[\w]{3,})\b)"); //Qualsiasi parola singola con + di 3 lettere | S|A|T|B
                 
-                    parola = match.Groups["word"].Value;
+				parola = match.Groups["word"].Value.ToLower();
 
                 if (STOP_LETTURA.Contains(parola)) goto EXIT;
 
@@ -386,28 +385,28 @@ namespace Utility_Promus
                     individuo.AddNota(info);
                     continue;
                 }
-                
 
             }
         EXIT:;
 
             //**** Qua comincia l'analisi del corpo del testo
 
-            paragrafo = paragrafo.Substring(fine);
+            paragrafo = paragrafo.Substring(fine); // Mi posiziono dopo la riga di intestazione
             //Controllo presenza di fonti e/o bibliografia
             fonti = regexFonti.Match(paragrafo).Success;
             biblio = regexBiblio.Match(paragrafo).Success;
 
             if (fonti) filtro += FONTI;
             if (biblio) filtro += BIBLIOGRAFIA;
-            string corpo = Regex.Match(paragrafo, filtro).Groups["corpo"].Value;
-
+            match = Regex.Match(paragrafo, filtro);
+			string corpo = match.Groups ["corpo"].Value;
             MatchCollection singoleInfo = Regex.Matches(corpo, @"[\w\W]+?[^\s]\.\s");
 
             foreach (Match singolaInfo in singoleInfo)
             {
                 Pattern.TryMatch(singolaInfo.Value);
             }
+
 
         }
         /// <summary>
@@ -418,6 +417,15 @@ namespace Utility_Promus
         void parseInfo(object s, MatchFoundEvntArgs args)
         {
             Match infoEstratte = args.Corrispondenza;
+			string g, m, a; Data data;
+			g = infoEstratte.Groups ["gg"].Value;
+			m = infoEstratte.Groups ["mese"].Value;
+			if (string.IsNullOrEmpty (m))
+				m = infoEstratte.Groups ["xx"].Value;
+			a = infoEstratte.Groups ["aaaa"].Value;
+			string d = g + "." + m + "." + a;
+			if (Data.TryParse(d, out data))
+				this.individuo.AddAttività(infoEstratte.Value,TipoAttività.AUTO,data);
         }
 
         /// <summary>
@@ -477,21 +485,7 @@ namespace Utility_Promus
 
             foreach(Individuo ind in individui)
             {
-                string helper = string.Format(
-    @"
-INDIVIDUO N.{0}: {1} - {2}{3}
-*Note*
-{4}
-",
-    ind.ID, ind.CognomeNome, ind.AttivitàPrevalente, " di " + ind.Provenienza, ind.Note);
-
-                if (ind.TutteAttività.Any())
-                {
-                    foreach (var s in ind.TutteAttività)
-                        helper += "\n" + s;
-                }
-
-                result.Add(helper);
+				result.Add (ind.GetDescrizione());
             }
             
             return result;

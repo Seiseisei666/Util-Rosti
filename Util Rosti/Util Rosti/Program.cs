@@ -34,8 +34,8 @@ namespace Utility_Promus
         {
             Init();
             Console.Write(header);
-            GetSelection();
-
+            //GetSelection();
+			Parse("dizionario.txt");
         }
 
 
@@ -72,10 +72,10 @@ namespace Utility_Promus
 
             Console.WriteLine("Scrivo su file? S/N");
 
-            var sel = Console.ReadKey().Key;
+     //       var sel = Console.ReadKey().Key;
 
-            if (sel == ConsoleKey.S)
-            {
+//            if (sel == ConsoleKey.S)
+//            {
                 Console.WriteLine("Inizio scrittura su file...");
 
 
@@ -83,10 +83,10 @@ namespace Utility_Promus
 
                 Console.WriteLine("Scrittura su file completata.\nPremere un tasto per continuare");
 
-            }
+          //  }
 
-            Console.ReadKey();
-
+          //  Console.ReadKey();
+			return;
         }
 
 

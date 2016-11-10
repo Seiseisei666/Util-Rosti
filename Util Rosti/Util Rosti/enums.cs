@@ -35,6 +35,6 @@
 
     enum TipoAttività
     {
-        nascita, morte, ingresso, uscita
+        AUTO,nascita, morte, ingresso, uscita
     }
 }

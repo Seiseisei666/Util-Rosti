@@ -106,6 +106,17 @@ namespace Utility_Promus
             attività.Add(new Attività(this, descrizione, tipo, data));
         }
 
+		public string GetDescrizione ()
+		{
+			string descr = CognomeNome;
+			descr += "\r\n";
+			foreach (var v in voce_o_strumento)
+				descr += (v + ", ");
+			int cAtt = 1;
+			foreach (var a in attività)
+				descr += (string.Format("\r\n*{0}*: {1}", cAtt++, a.GetDescrizione ()));
+			return descr;
+		}
         #endregion
 
         #region ******************ALTRE TABELLE**********************
