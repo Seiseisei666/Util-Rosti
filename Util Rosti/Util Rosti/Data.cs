@@ -32,7 +32,7 @@ namespace Utility_Promus
             int s, d, _a;
             s = a / 100;
             d = (a - s * 100) / 10;
-            _a = a - s + d;
+            _a = a - (s*100 + d*10);
             this.anno_string = a.ToString();
             setData(g, m, s, d, _a);
 		}
@@ -50,7 +50,7 @@ namespace Utility_Promus
 
         public override string ToString()
         {
-            return string.Format("{0} {1} {2}", g, Enum.GetNames(typeof (Mesi))[m], anno_string);
+            return string.Format("{0} {1} {2}", g, ((Mesi)m).ToString(), anno_string);
 		}
 
         public string GG_MM_AAAA { get

@@ -347,7 +347,7 @@ namespace Utility_Promus
             bool fonti, biblio;
             MatchCollection matchesFrasi;
             int lunghezzaInfo = 0;
-            bool continuaInfo = false;
+            bool inLetturaInfo = false;
 
             //************** Analizzo fino al primo ritorno a capo: 
             //Info Voce, parentele, altre notizie semplic
@@ -400,44 +400,48 @@ namespace Utility_Promus
             if (biblio) filtro += BIBLIOGRAFIA;
             match = Regex.Match(body, filtro);
             string corpo = match.Groups ["corpo"].Value; //TODO: vale la pena dividere  fra header body biblio e fonti prima, all'inizio del metodo
-            Match matchIter, matchInfoSave;
+            bool infoTrovata = false;
+            Data dataInfo = null;
             MatchCollection ritorniAcapo = Regex.Matches(corpo, @".+?\r?\n");
             foreach (Match paragrafetto in ritorniAcapo)
             {
-                matchInfoSave = null;
+                string fraseInfo = "";
+                inLetturaInfo = false;
+                infoTrovata = false;
                 matchesFrasi = rxSingolaFrase.Matches(paragrafetto.Value);
                 foreach (Match matchFrase in matchesFrasi)
                 {
-                    continuaInfo = false;
-                    matchIter = Pattern.TryMatch(matchFrase.Value);
-                    if (matchIter != null   // In questa frase c'è una data valida, prima notizia letta nel par
-                        && !continuaInfo)
+                    infoTrovata = Pattern.TryMatch(matchFrase.Value);
+                    if (infoTrovata   // In questa frase c'è una data valida, prima notizia letta nel par
+                        && !inLetturaInfo)
                     {
-                        continuaInfo = true;
-                        matchInfoSave = matchIter;
+                        inLetturaInfo = true;
                         lunghezzaInfo = matchFrase.Length;
+                        fraseInfo = matchFrase.Value;
+                        dataInfo = Pattern.Data;
                     }
-                    else if (matchIter != null
-                        &&continuaInfo)  // In questa frase c'è una dta valida, relativa ad una nuova notizia
+                    else if (infoTrovata
+                        &&inLetturaInfo)  // In questa frase c'è una dta valida, relativa ad una nuova notizia
                     {
-                        saveInfo(matchInfoSave, lunghezzaInfo);
-                        matchInfoSave = matchIter;
+                        saveInfo(fraseInfo, dataInfo);
+                        fraseInfo = matchFrase.Value;
+                        dataInfo = Pattern.Data;
                     }
-                    else                        // La data non è valida
+                    else                        // Nessuna info in questa frase
                     {
-                        lunghezzaInfo += matchFrase.Length;
+                        if (inLetturaInfo) fraseInfo += matchFrase.Value;
                     }
 
                 }
-                if (matchInfoSave!= null)
-                saveInfo(matchInfoSave, lunghezzaInfo);
+                if (!string.IsNullOrEmpty(fraseInfo))
+                    saveInfo(fraseInfo, dataInfo);
             }
         }
 
-        void saveInfo (Match infoEstratte, int end)
+        void saveInfo (string descrizione, Data data)
         {
-if (Pattern.Data!=null)
-                this.individuo.AddAttività(infoEstratte.Value, TipoAttività.AUTO, Pattern.Data);
+            if (Pattern.Data!=null)
+                this.individuo.AddAttività(descrizione, TipoAttività.AUTO, data);
 
         }
 
