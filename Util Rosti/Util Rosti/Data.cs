@@ -33,7 +33,7 @@ namespace Utility_Promus
             s = a / 100;
             d = (a - s * 100) / 10;
             _a = a - s + d;
-            this.anno_string = _a.ToString();
+            this.anno_string = a.ToString();
             setData(g, m, s, d, _a);
 		}
 
@@ -88,7 +88,7 @@ namespace Utility_Promus
 		public static bool TryParse (string txt, out Data data)
 		{
 			Match match = null;
-			int g, a, m = 0;
+            string g, a, m = "";
 			Regex [] Formati = 
 			{
 				new Regex (GG + _P_OR_S + XX + _P_OR_S + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
@@ -100,7 +100,6 @@ namespace Utility_Promus
 
 				match = formato.Match (txt);
 				if (match.Success) {
-					Console.WriteLine ("************************"+match.Value);
 					break;
 				}
 			}
@@ -109,48 +108,60 @@ namespace Utility_Promus
 				data = null;
 				return false;
 			}
-
-			g = match.Groups ["gg"].Success 
-				? int.Parse (match.Groups ["gg"].Value) 
-				: 0;
-
-			if (match.Groups ["xx"].Success)
-				m = match.Groups ["xx"].Value.ToArabic ();
-			else if (match.Groups ["mese"].Success) {
-				foreach (Mesi mese in Enum.GetValues(typeof(Mesi)))
-					if (match.Groups ["mese"].Value.ToCapitalCase () == mese.ToString ()) {
-						m = (int)mese;
-						break;
-					}
-			} else {
-				data = null;
-				return false;
-			}
-
-            if (int.TryParse (match.Groups["aaaa"].Value, out a))
-                data = new Data (g, m, a);
+            g = match.Groups["gg"].Value;
+            m = match.Groups["xx"].Success 
+                ? match.Groups["xx"].Value 
+                : match.Groups["mese"].Value;
+            a = match.Groups["aaaa"].Value;
+            return (Data.TryParse(g, m, a, out data));
+		}
+           
+        public static bool TryParse (string gg, string mese, string anno, out Data data)
+        {
+            //Giorno
+            int g = 0; int m = 0; int a = 0;
+            int.TryParse(gg, out g);
+            //Mese
+            if (string.IsNullOrEmpty(mese)) m = 0;
+            else
+            {
+                if (mese.Length<=4)
+                        m = mese.ToArabic();
+                else
+                {
+                    foreach (Mesi nome_mese in Enum.GetValues(typeof(Mesi)))
+                        if (mese.ToCapitalCase() == nome_mese.ToString())
+                        {
+                            m = (int)nome_mese;
+                            break;
+                        }
+                }
+            }
+            
+            if (int.TryParse(anno, out a))
+                data = new Data(g, m, a);
             else try
                 {
-                    data = new Data(g, m, match.Groups["aaaa"].Value);
+                    data = new Data(g, m, anno);
                 }
                 catch (ArgumentException)
                 {
                     data = null;
                     return false;
                 }
-			return true;
-		}
-           
+            return true;
 
-//		public static readonly Regex [] Formati = 
-//		{
-//			new Regex (GG + _P_OR_S + XX + _P_OR_S + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
-//			new Regex (GG + _P_OR_S + MESE + _P_OR_S + AAAA , RegexOptions.Compiled), // GG Mese AAAA
-//			new Regex (_S + MESE + @"[\s\.](?:del(?:\s|l'anno\s))?" + AAAA , RegexOptions.Compiled), // Mese [del] AAAA
-//		};
+        }
+
+        //		public static readonly Regex [] Formati = 
+        //		{
+        //			new Regex (GG + _P_OR_S + XX + _P_OR_S + AAAA, RegexOptions.Compiled), // GG.XX.AAAA
+        //			new Regex (GG + _P_OR_S + MESE + _P_OR_S + AAAA , RegexOptions.Compiled), // GG Mese AAAA
+        //			new Regex (_S + MESE + @"[\s\.](?:del(?:\s|l'anno\s))?" + AAAA , RegexOptions.Compiled), // Mese [del] AAAA
+        //		};
 
 
-		public static readonly string _S = @"\s";
+        public static readonly string _S = @"\s";
 		public static readonly string _P = @"\.";
         public static readonly string _P_OR_S = @"[\s\.]{1,2}";
 		public static readonly string GG = @"(?<gg>\d\d?)°?";

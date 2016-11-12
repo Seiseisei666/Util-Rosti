@@ -55,7 +55,8 @@ namespace Utility_Promus
                     case 'M':
                         n1 = 1000;
                         break;
-                        
+                    default:
+                        return 0;
                 }
 
                 if (n0 >= n1) tot += n1;

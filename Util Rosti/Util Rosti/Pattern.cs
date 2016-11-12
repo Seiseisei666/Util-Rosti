@@ -17,9 +17,8 @@ namespace Utility_Promus
 
         Regex regex;
 		Pattern[] children;
-        string tipoEvento;
         TipoData tipo;
-		Match matchInfo;
+		Match match;
 
 
 		private Pattern (string pattern, TipoData tipo= TipoData.NA, params Pattern[] children)
@@ -41,9 +40,9 @@ namespace Utility_Promus
 		static Pattern [] _patterns ()
         {
 
-            var data_txt_fine = new Pattern(@".*" + _GGMMAA + _TESTO + _FINE_INFO);
-            var gg_mese_anno_txt_fine = new Pattern(@".*" + _GGmeseAAAA + _TESTO + _FINE_INFO);
-            var mese_anno_txt_fine = new Pattern(@".*" + _MESE + @"(?:di|del)\s" + _AAAA + _TESTO + _FINE_INFO);
+            var data_txt_fine = new Pattern(@".*?(?<gg>\d\d?)°?[\s\.]{1,2}(?<xx>[IVX]{1,4})[\s\.]{1,2}(?<aaaa>\d\d[\d\.?]{2})");
+            var gg_mese_anno_txt_fine = new Pattern(@".*?(?<gg>\d\d ?)°?[\s\.]{1,2}(?<mese>(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\b[\s\.]{1,2}(?<aaaa>\d\d[\d\.?]{2})");
+            var mese_anno_txt_fine = new Pattern(@".*?(?<mese>(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\b[\s\.]{1,2}(?<aaaa>\d\d[\d\.?]{2})");
             var chldrn = new Pattern[] { data_txt_fine, gg_mese_anno_txt_fine, mese_anno_txt_fine };
 
 
@@ -55,8 +54,8 @@ namespace Utility_Promus
             var intorno_a = new Pattern(@"\b(?<pos>intorno\sa(?:l?\s|ll')|[n\b]circa\b)", TipoData.intorno_a, chldrn);
             var tra = new Pattern(@"\b(?:[tf]ra\s(?<pos>il\s|l').+?)(?=e\s(?<pos2>il\s|l'))", TipoData.tra, chldrn);
             //                      
-            var ingresso = new Pattern(@"\na.\s?", TipoData.il, chldrn);
-            var uscita = new Pattern(@"\nd.\s?", TipoData.il, chldrn);
+            var ingresso = new Pattern(@"\W?(?<pos>a\.\s?)", TipoData.il, chldrn);
+            var uscita = new Pattern(@"\W?(?<pos>d\.\s?)", TipoData.il, chldrn);
 
             Pattern[] result = { ingresso, uscita, prima_di, fino_al, a_partire_da, dopo_il, il, intorno_a, tra };
             return result;
@@ -72,8 +71,8 @@ namespace Utility_Promus
  
 		void _tryMatch (string stringa, Pattern riferimento = null, int startPos = 0)
 		{
-            Match match;
-			Pattern padre = 
+
+            Pattern padre = 
 				riferimento == null 
 				? this 
 				: riferimento;
@@ -82,33 +81,43 @@ namespace Utility_Promus
 
 			if (match.Success)
             {
-				if (children.Any () && running) {
-					while (match.Success) {
-						int offset = match.Groups ["pos"].Index + match.Groups ["pos"].Length;
+				if (children.Any () && running)
+                {
+						int offset = //match.Groups ["pos"].Index + 
+                        match.Groups ["pos"].Length;
 						//match = null;
 						foreach (Pattern p in children)
-							p._tryMatch (stringa, padre, startPos = offset);
-						match = match.NextMatch ();
-					}
+							p._tryMatch (stringa, padre, startPos = offset);					
                     
 				} else if (!children.Any () && running) {
-					MatchFound.Invoke (this, new MatchFoundEvntArgs (match, this.tipo));
+                    //MatchFound.Invoke (this, new MatchFoundEvntArgs (match, this.tipo));
 					running = false;
-				}
+                    result=  padre.match;
+                    Pattern.Data = null;
+                    string g, m, a;
+                    g = match.Groups["gg"].Value;
+                    m = match.Groups["xx"].Success
+                        ? match.Groups["xx"].Value
+                        : match.Groups["mese"].Value;
+                    a = match.Groups["aaaa"].Value;
+                    Data.TryParse(g, m, a, out Data);
                 }
             }
+            }
 
-
-
+        public static Data Data;
+        static Match result;
 		static bool running;
-		public static void TryMatch (string stringa)
+		public static Match TryMatch (string stringa)
 		{
+            result = null;
 			running = true;
 			foreach (Pattern p in _patterns()) 
 			{
-				if (running) p._tryMatch(stringa);
+                if (running) p._tryMatch(stringa);
+                else break;
 			}
-
+            return result;
 		}
 
         public static event EventHandler<MatchFoundEvntArgs> MatchFound;

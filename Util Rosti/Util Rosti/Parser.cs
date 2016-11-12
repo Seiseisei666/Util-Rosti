@@ -94,11 +94,13 @@ namespace Utility_Promus
         };
         #endregion
 
-        readonly Regex fineParagrafo = new Regex(@"\r\n\r\n", RegexOptions.Compiled);
+        readonly Regex fineParagrafo = new Regex("(?<txt>(?:.+?\n)+?)(?:\r?\n)+", RegexOptions.Compiled);
         readonly Regex cognome_e_nome = new Regex(COGNOME + NOME, RegexOptions.Compiled);
         readonly Regex regexParentesi = new Regex(PARENTESI, RegexOptions.Compiled);
         readonly Regex regexFonti = new Regex(@"F(onti|ONTI)\:", RegexOptions.Compiled);
         readonly Regex regexBiblio = new Regex(@"B(ibliografia|IBLIOGRAFIA)\:", RegexOptions.Compiled);
+        readonly Regex rxSingolaFrase = new Regex(@"(?<info>.+?)(?:[\n\r;]|(?<!\b[\w]{1,2})\.\s(?![IVX\.\d]{2,10}))\s?(?!(?:[^\(]+\)|[^\[]\]|[^«]+»))", RegexOptions.Compiled); //Ogni singola frase delimitata da  ";" e a capo
+        readonly Regex rxSingolaFrase_virgola = new Regex(@"(?<info>.+?)(?:[\n\r;,])\s?(?!(?:[^\(]+\)|[^\[]\]|[^«]+»))", RegexOptions.Compiled); //Ogni singola frase delimitata da "," ";" ". " e a capo
 
 
         List<Tuple<int, int>> indici;
@@ -115,7 +117,7 @@ namespace Utility_Promus
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 
-            Pattern.MatchFound += parseInfo;
+          //  Pattern.MatchFound += parseInfo;
 
             defineParagraphs();
 
@@ -155,11 +157,7 @@ namespace Utility_Promus
                 match = match.NextMatch();
                 entries++;
             }
-            //HACK Aggiungo l'ultima entry
-			paragrafo = testo.Substring(indici.Last().Item1+indici.Last().Item2);
 
-            if (isParagraphValid(paragrafo))
-                indici.Add(new Tuple<int, int>(inizioPar, testo.Length - inizioPar));
 
             entriesOk = indici.Count;
             Console.WriteLine("\nTrovati {0} Paragrafi validi su un totale di {1} paragrafi analizzati.", entriesOk, entries);
@@ -347,19 +345,21 @@ namespace Utility_Promus
             string filtro = CORPO;
             string parola;
             bool fonti, biblio;
-
-
-            MatchCollection matchFrase;
+            MatchCollection matchesFrasi;
+            int lunghezzaInfo = 0;
+            bool continuaInfo = false;
 
             //************** Analizzo fino al primo ritorno a capo: 
             //Info Voce, parentele, altre notizie semplic
             //Ogni singola info è delimitata da , o ;
-			matchFrase = Regex.Matches(Regex.Match(paragrafo,@".*\r?\n").Value, @"(?<info>[\w\s'«»]+?)[,;\.]");
-            int fine = 0;
+            int divisione = Regex.Match(paragrafo, @"(?<header>.*?)\r?\n").Length;
+            string header = paragrafo.Substring(0, divisione);
+            string body = paragrafo.Substring(divisione);
+            matchesFrasi = rxSingolaFrase_virgola.Matches(header); //Ogni singola frase delimitata da "," ";" ". " e a capo
+                                                                                    
 
-			foreach (Match m in matchFrase)
+			foreach (Match m in matchesFrasi)
 			{	
-                fine = m.Index + m.Length;
 				string info = m.Groups["info"].Value; //Tutta la riga di intestazione (dopo nome cogn e parentesi)
 
                 //Analizzo TUTTE le parole della stringa di info
@@ -367,7 +367,7 @@ namespace Utility_Promus
                 
 				parola = match.Groups["word"].Value.ToLower();
 
-                if (STOP_LETTURA.Contains(parola)) goto EXIT;
+                if (STOP_LETTURA.Contains(parola)) break;
 
                 else if (VOCI_O_STRUM.Contains(parola))
                 {   //Se info è ad es. "S di Santa Maria Maggiore" mi copio TUTTA la stringa
@@ -379,41 +379,74 @@ namespace Utility_Promus
                     individuo.AddNota(info);
                     continue;
                 }
-                    
+
                 else if (TERM_DI_PARENTELA.Contains(parola))
                 {
                     individuo.AddNota(info);
                     continue;
                 }
 
+                else System.Diagnostics.Debug.WriteLine("INFO HEADER NON COMPRENSIBILE: " + info);
+
             }
-        EXIT:;
 
-            //**** Qua comincia l'analisi del corpo del testo
+            //**** Qua comincia l'analisi del corpo vero e proprio del testo (string body)
 
-            paragrafo = paragrafo.Substring(fine); // Mi posiziono dopo la riga di intestazione
             //Controllo presenza di fonti e/o bibliografia
             fonti = regexFonti.Match(paragrafo).Success;
             biblio = regexBiblio.Match(paragrafo).Success;
 
             if (fonti) filtro += FONTI;
             if (biblio) filtro += BIBLIOGRAFIA;
-            match = Regex.Match(paragrafo, filtro);
-			string corpo = match.Groups ["corpo"].Value;
-            MatchCollection singoleInfo = Regex.Matches(corpo, @"[\w\W]+?[^\s]\.\s");
-
-            foreach (Match singolaInfo in singoleInfo)
+            match = Regex.Match(body, filtro);
+            string corpo = match.Groups ["corpo"].Value; //TODO: vale la pena dividere  fra header body biblio e fonti prima, all'inizio del metodo
+            Match matchIter, matchInfoSave;
+            MatchCollection ritorniAcapo = Regex.Matches(corpo, @".+?\r?\n");
+            foreach (Match paragrafetto in ritorniAcapo)
             {
-                Pattern.TryMatch(singolaInfo.Value);
-            }
+                matchInfoSave = null;
+                matchesFrasi = rxSingolaFrase.Matches(paragrafetto.Value);
+                foreach (Match matchFrase in matchesFrasi)
+                {
+                    continuaInfo = false;
+                    matchIter = Pattern.TryMatch(matchFrase.Value);
+                    if (matchIter != null   // In questa frase c'è una data valida, prima notizia letta nel par
+                        && !continuaInfo)
+                    {
+                        continuaInfo = true;
+                        matchInfoSave = matchIter;
+                        lunghezzaInfo = matchFrase.Length;
+                    }
+                    else if (matchIter != null
+                        &&continuaInfo)  // In questa frase c'è una dta valida, relativa ad una nuova notizia
+                    {
+                        saveInfo(matchInfoSave, lunghezzaInfo);
+                        matchInfoSave = matchIter;
+                    }
+                    else                        // La data non è valida
+                    {
+                        lunghezzaInfo += matchFrase.Length;
+                    }
 
+                }
+                if (matchInfoSave!= null)
+                saveInfo(matchInfoSave, lunghezzaInfo);
+            }
+        }
+
+        void saveInfo (Match infoEstratte, int end)
+        {
+if (Pattern.Data!=null)
+                this.individuo.AddAttività(infoEstratte.Value, TipoAttività.AUTO, Pattern.Data);
 
         }
+
         /// <summary>
         /// Invocato dall'evento Pattern.TryMatch
         /// </summary>
         /// <param name="s"></param>
         /// <param name="args"></param>
+        [Obsolete]
         void parseInfo(object s, MatchFoundEvntArgs args)
         {
             Match infoEstratte = args.Corrispondenza;
