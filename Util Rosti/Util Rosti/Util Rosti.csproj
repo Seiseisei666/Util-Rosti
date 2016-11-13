@@ -47,36 +47,33 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attività.cs" />
-    <Compile Include="CSVField.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="Extension Methods.cs" />
     <Compile Include="Individuo.cs" />
     <Compile Include="Info_Parentela.cs" />
-    <Compile Include="MatchFoundEvntArgs.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Pattern.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Pattern.cs" />
+    <Compile Include="Ricerca\Scanner.cs" />
     <Compile Include="TabellaDB.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="Properties\Resources\filtri.CSV" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Properties\filtri.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

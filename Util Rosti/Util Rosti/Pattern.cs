@@ -114,7 +114,7 @@ namespace Utility_Promus
             return (!running);
 		}
 
-        public static event EventHandler<MatchFoundEvntArgs> MatchFound;
+
 	}
 
 
