@@ -131,7 +131,6 @@ namespace Utility_Promus
         {
             //Variabili locali
             int progress = 0;
-            int inizioPar = 0, lunghezzaPar;
             string paragrafo;
             Match match;
 
@@ -145,7 +144,7 @@ namespace Utility_Promus
             {
 				
 				paragrafo = match.Groups["txt"].Value;
-
+				System.Diagnostics.Debug.WriteLine (paragrafo);
                 if (isParagraphValid(paragrafo))
 					indici.Add(new Tuple<int, int>(match.Index, match.Length));
 
