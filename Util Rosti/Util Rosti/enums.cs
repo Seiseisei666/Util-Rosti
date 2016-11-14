@@ -37,4 +37,12 @@
     {
         AUTO,nascita, morte, ingresso, uscita
     }
+
+	enum TipoFiltro
+	{
+		Data,
+		Fonte,
+	}
+
+
 }

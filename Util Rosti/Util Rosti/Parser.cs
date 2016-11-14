@@ -14,6 +14,8 @@ namespace Utility_Promus
         /// </summary>
         string testo;
 
+		Ricerca.Scanner scannerDate;
+
         int entries, entriesOk = 0;
 
         static int conteggioErrori = 0;
@@ -114,6 +116,7 @@ namespace Utility_Promus
             this.testo = testo;
 			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
 			fineParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
+			scannerDate = new Ricerca.Scanner (TipoFiltro.Data);
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 
@@ -341,13 +344,12 @@ namespace Utility_Promus
         void analizzaCorpo()
         {
             //Locali
-            Match match;
-            string filtro = CORPO;
-            string parola;
-            bool fonti, biblio;
-            MatchCollection matchesFrasi;
-            int lunghezzaInfo = 0;
-            bool inLetturaInfo = false;
+            Match match; 						//match multifunzione
+            string filtro = CORPO;				//Filtro per delimitare il corpo del testo
+            string parola;						//locale per singola parola dell'header
+			bool fonti, biblio;					//Sono presenti le sezioni Fonti e Biblio?
+			MatchCollection matches_frasi;		//locale per identificare ogni singola frase del corpo testo
+            bool continuazione_info = false;	//la frase non significativa che sto leggendo è continuazione di una info contenuta nel periodo precedente?
 
             //************** Analizzo fino al primo ritorno a capo: 
             //Info Voce, parentele, altre notizie semplic
@@ -355,10 +357,10 @@ namespace Utility_Promus
             int divisione = Regex.Match(paragrafo, @"(?<header>.*?)\r?\n").Length;
             string header = paragrafo.Substring(0, divisione);
             string body = paragrafo.Substring(divisione);
-            matchesFrasi = rxSingolaFrase_virgola.Matches(header); //Ogni singola frase delimitata da "," ";" ". " e a capo
+            matches_frasi = rxSingolaFrase_virgola.Matches(header); //Ogni singola frase delimitata da "," ";" ". " e a capo
                                                                                     
 
-			foreach (Match m in matchesFrasi)
+			foreach (Match m in matches_frasi)
 			{	
 				string info = m.Groups["info"].Value; //Tutta la riga di intestazione (dopo nome cogn e parentesi)
 
@@ -400,28 +402,33 @@ namespace Utility_Promus
             if (biblio) filtro += BIBLIOGRAFIA;
             match = Regex.Match(body, filtro);
             string corpo = match.Groups ["corpo"].Value; //TODO: vale la pena dividere  fra header body biblio e fonti prima, all'inizio del metodo
-            bool infoTrovata = false;
+            
+			//Setup per l'analisi delle info
+
+			bool info_trovata = false;
             Data dataInfo = null;
             MatchCollection ritorniAcapo = Regex.Matches(corpo, @".+?\r?\n");
             foreach (Match paragrafetto in ritorniAcapo)
             {
                 string fraseInfo = "";
-                inLetturaInfo = false;
-                infoTrovata = false;
-                matchesFrasi = rxSingolaFrase.Matches(paragrafetto.Value);
-                foreach (Match matchFrase in matchesFrasi)
+				continuazione_info = false;
+                info_trovata = false;
+                matches_frasi = rxSingolaFrase.Matches(paragrafetto.Value);
+                foreach (Match matchFrase in matches_frasi)
                 {
-                    infoTrovata = Pattern.TryMatch(matchFrase.Value);
-                    if (infoTrovata   // In questa frase c'è una data valida, prima notizia letta nel par
-                        && !inLetturaInfo)
+					scannerDate.Scan (matchFrase.Value);
+					info_trovata = scannerDate.Success;
+                    if (info_trovata   // In questa frase c'è una data valida, prima notizia letta nel par
+                        && !continuazione_info)
                     {
-                        inLetturaInfo = true;
-                        lunghezzaInfo = matchFrase.Length;
+                        continuazione_info = true;
                         fraseInfo = matchFrase.Value;
-                        dataInfo = Pattern.Data;
+
+						string[] gmxa = scannerDate.getInfos ("gg", "xx", "mese", "aaaa");
+						Data.TryParse(gmxa[0],gmxa[1]+gmxa[2], gmxa[3], out dataInfo);
                     }
-                    else if (infoTrovata
-                        &&inLetturaInfo)  // In questa frase c'è una dta valida, relativa ad una nuova notizia
+                    else if (info_trovata
+                        &&continuazione_info)  // In questa frase c'è una dta valida, relativa ad una nuova notizia
                     {
                         saveInfo(fraseInfo, dataInfo);
                         fraseInfo = matchFrase.Value;
@@ -429,7 +436,7 @@ namespace Utility_Promus
                     }
                     else                        // Nessuna info in questa frase
                     {
-                        if (inLetturaInfo) fraseInfo += matchFrase.Value;
+                        if (continuazione_info) fraseInfo += matchFrase.Value;
                     }
 
                 }
@@ -445,25 +452,8 @@ namespace Utility_Promus
 
         }
 
-        /// <summary>
-        /// Invocato dall'evento Pattern.TryMatch
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="args"></param>
-        [Obsolete]
-        void parseInfo(object s, MatchFoundEvntArgs args)
-        {
-            Match infoEstratte = args.Corrispondenza;
-			string g, m, a; Data data;
-			g = infoEstratte.Groups ["gg"].Value;
-			m = infoEstratte.Groups ["mese"].Value;
-			if (string.IsNullOrEmpty (m))
-				m = infoEstratte.Groups ["xx"].Value;
-			a = infoEstratte.Groups ["aaaa"].Value;
-			string d = g + "." + m + "." + a;
-			if (Data.TryParse(d, out data))
-				this.individuo.AddAttività(infoEstratte.Value,TipoAttività.AUTO,data);
-        }
+
+
 
         /// <summary>
         /// Log a console e eventuale GESTIONE paragrafi scartati

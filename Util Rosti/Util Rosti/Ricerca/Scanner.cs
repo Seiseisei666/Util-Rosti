@@ -14,86 +14,149 @@ namespace Utility_Promus.Ricerca
 
         bool isRunning;
 
+		public bool Success {get; private set;}
+
         string testo;
 
+		Match risultato;
+
+		/// <summary>
+		/// Tutti i pattern più generali, che non sono figli di nessun altro
+		/// </summary>
+		Regex[] filtri0;
+
+		/// <summary>
+		/// Associa ad ogni pattern i suoi sottopattern, se ne ha
+		/// </summary>
         Dictionary<Regex, List<Regex>> relazioni;
 
-        public Scanner()
+		public Scanner(TipoFiltro tipoFiltro)
         {
             CsvReader reader = new CsvReader(new System.IO.StringReader(Properties.Resources.filtri));
             reader.Configuration.Delimiter = ";";
 
-            var validEntries = new Dictionary<int,Tuple<string, string, int[]>>();
+            var valid_entries = new Dictionary<int,Tuple<string, string, int[]>>();
 
-            try
-            {
+
                 while (reader.Read())
                 {
-                    string tipo, figli, pattern; int id;
+                    int id;
 
-                    tipo = reader.GetField("TIPO");
-                    if (tipo != "Data") continue;
+                    string tipo = reader.GetField("TIPO");
+					if (tipo != tipoFiltro.ToString()) continue;
 
-                    pattern = reader.GetField("REGEX");
-                    figli = reader.GetField("CHILDREN");
+                    string pattern = reader.GetField("REGEX");
+                    string figli = reader.GetField("CHILDREN");
                     id = reader.GetField<int>("ID");
 
-                    var idsFigli = 
-                        figli.Split(',')
-                        .Select(s => int.Parse(s))
-                        .ToArray<int>();
+					//Trasformo il formato N,N,... del campo children in un array di int
+					var idsFigli = 
+						string.IsNullOrEmpty(figli)
+						?	new int[0]
+						:   figli.Split(',')
+                        	.Select(s => int.Parse(s))
+                        	.ToArray<int>();
                     
-                    validEntries.Add(id, new Tuple<string, string, int[]>("", pattern, idsFigli));
+					//Memorizzo in locale i campi validi
+					//Key = ID
+					//Item1: descrizione ***NON USATO ANCORA***
+					//Item2: pattern del regex
+					//Item3: array degli id dei figli
+					valid_entries.Add(id, new Tuple<string, string, int[]>("", pattern, idsFigli));
                 }
-            }
-            catch 
-            {
-                throw;
-            }
+           
 
+			//Genero uno ad uno tutti i regex letti
+			var regex_generati = new Regex[valid_entries.Max(e => e.Key)+1];
+            foreach (var e in valid_entries)
+                regex_generati[e.Key] = new Regex(e.Value.Item2, RegexOptions.Compiled);
 
-            var regexGenerati = new Regex[validEntries.Max(e => e.Key)+1];
-            foreach (var e in validEntries)
-                regexGenerati[e.Key] = new Regex(e.Value.Item2, RegexOptions.Compiled);
+			//Estraggo i pattern generali (= quelli che non sono figli di nessuno)
+			var pattern_generali = valid_entries.Where(
+                entry => !valid_entries.Values.Any(
+                    tuple => tuple.Item3.Contains(entry.Key)));
 
-            var padri = validEntries.Where(
-                e => !validEntries.Values.Any(
-                    t => t.Item3.Contains(e.Key)));
+			if (!pattern_generali.Any ())
+				throw new EntryPointNotFoundException ("Errore nel file dei filtri - filtri0 non presenti");
 
             relazioni = new Dictionary<Regex, List<Regex>>();
+
+			//Estraggo tutti i pattern che hanno almeno un sottopattern
+			var padri = valid_entries.Where (
+				            entry => entry.Value.Item3.Any ());
 
             foreach (var p in padri)
             {
                 var figli = new List<Regex>(p.Value.Item3.Count());
                 foreach (int i in p.Value.Item3)
-                    figli.Add(regexGenerati[i]);
-                relazioni.Add(regexGenerati[p.Key], figli);
+                    figli.Add(regex_generati[i]);
+                relazioni.Add(regex_generati[p.Key], figli);
             }
+
+			//Estraggo i filtri0 (regex generati dai pattern generali
+			filtri0 = pattern_generali.Select(
+				p => regex_generati [p.Key])
+				.ToArray();
             
         }
 
         public void Scan (string testo)
         {
-            this.testo = testo;
-            this.isRunning = true;
+            //Reset dello stato dell'oggetto
+			this.testo = testo;
+			this.isRunning = true;
+			this.Success = false;
+			this.risultato = null;
 
-            foreach (var pattern in relazioni.Keys)
+			foreach (var re in filtri0)
             {
-                if (isRunning)
-                    tryMatch(pattern);
+				if (isRunning)
+					tryMatch (re);
+				else
+					return;
             }
         }
 
-        void tryMatch (Regex regex)
+		/// <summary>
+		/// Metodo pubblico per leggere i risultati del match
+		/// </summary>
+		/// <param name="parametro">stringa identificativa del gruppo letto</param>
+		public string getInfo(string gr)
+		{
+			return risultato.Groups [gr].Value;
+		}
+
+		public string [] getInfos (params string[] groups)
+		{
+			string[] res = new string[groups.Count()];
+			int c = 0;
+			foreach (var gr in groups)
+				res [c++] =
+					risultato.Groups [gr].Value;
+			return res;
+		}
+
+
+        void tryMatch (Regex re)
         {
-            Match match = regex.Match(testo);
-            Regex next;
+            Match match = re.Match(testo);
+			List<Regex> figli;
             if (match.Success)
             {
-                Regex next = null;
-                if (relazioni)
+				if (relazioni.TryGetValue (re, out figli)) {
+					foreach (var f in figli) {
+						tryMatch (f);
+					}
+				} 
+				else {
+					isRunning = false;
+					Success = true;
+					risultato = match;
+					return;
+				}
             }
 
         }
+
     }
 }
