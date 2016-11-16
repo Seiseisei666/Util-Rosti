@@ -116,7 +116,7 @@ namespace Utility_Promus
             this.testo = testo;
 			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
 			regexParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
-			scannerDate = new Ricerca.Scanner (TipoFiltro.Data);
+			scannerDate = new Ricerca.Scanner ("Data");
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 

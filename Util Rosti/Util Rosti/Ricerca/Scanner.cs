@@ -16,6 +16,8 @@ namespace Utility_Promus.Ricerca
 
 		public bool Success {get; private set;}
 
+        Dictionary<string, string> retrieved = new Dictionary<string, string>();
+
         string testo;
 
 		Match risultato;
@@ -25,12 +27,12 @@ namespace Utility_Promus.Ricerca
 		/// </summary>
 		Regex[] filtri0;
 
-		/// <summary>
-		/// Associa ad ogni pattern i suoi sottopattern, se ne ha
-		/// </summary>
-        Dictionary<Regex, List<Regex>> relazioni;
+        /// <summary>
+        /// Associa ad ogni pattern i suoi sottopattern, se ne ha
+        /// </summary>
+        Dictionary<Regex, List<Regex>> relazioni = new Dictionary<Regex, List<Regex>>();
 
-		public Scanner(TipoFiltro tipoFiltro)
+		public Scanner(string tipoFiltro)
         {
             CsvReader reader = new CsvReader(new System.IO.StringReader(Properties.Resources.filtri));
             reader.Configuration.Delimiter = ";";
@@ -43,7 +45,7 @@ namespace Utility_Promus.Ricerca
                     int id;
 
                     string tipo = reader.GetField("TIPO");
-					if (tipo != tipoFiltro.ToString()) continue;
+					if (tipo != tipoFiltro) continue;
 
                     string pattern = reader.GetField("REGEX");
                     string figli = reader.GetField("CHILDREN");
@@ -64,10 +66,18 @@ namespace Utility_Promus.Ricerca
 					//Item3: array degli id dei figli
 					valid_entries.Add(id, new Tuple<string, string, int[]>("", pattern, idsFigli));
                 }
-           
 
-			//Genero uno ad uno tutti i regex letti
-			var regex_generati = new Regex[valid_entries.Max(e => e.Key)+1];
+            //Controllo che non ci siano riferimenti circolari
+
+            var loop = valid_entries.Any(
+                entry => entry.Value.Item3.Any(
+                    figlio => valid_entries[figlio].Item3.Contains(entry.Key)
+                    || figlio == entry.Key));
+
+            if (loop) throw new Exception("Errore nei filtri - presente riferimento circolare");
+
+            //Genero uno ad uno tutti i regex letti
+            var regex_generati = new Regex[valid_entries.Max(e => e.Key)+1];
             foreach (var e in valid_entries)
                 regex_generati[e.Key] = new Regex(e.Value.Item2, RegexOptions.Compiled);
 
@@ -78,8 +88,6 @@ namespace Utility_Promus.Ricerca
 
 			if (!pattern_generali.Any ())
 				throw new EntryPointNotFoundException ("Errore nel file dei filtri - filtri0 non presenti");
-
-            relazioni = new Dictionary<Regex, List<Regex>>();
 
 			//Estraggo tutti i pattern che hanno almeno un sottopattern
 			var padri = valid_entries.Where (
@@ -103,6 +111,7 @@ namespace Utility_Promus.Ricerca
         public void Scan (string testo)
         {
             //Reset dello stato dell'oggetto
+            this.retrieved.Clear();
 			this.testo = testo;
 			this.isRunning = true;
 			this.Success = false;
@@ -123,7 +132,9 @@ namespace Utility_Promus.Ricerca
 		/// <param name="parametro">stringa identificativa del gruppo letto</param>
 		public string getInfo(string gr)
 		{
-			return risultato.Groups [gr].Value;
+            string res;
+            retrieved.TryGetValue(gr, out res);
+            return res;
 		}
 
 		public string [] getInfos (params string[] groups)
@@ -132,7 +143,7 @@ namespace Utility_Promus.Ricerca
 			int c = 0;
 			foreach (var gr in groups)
 				res [c++] =
-					risultato.Groups [gr].Value;
+					getInfo(gr);
 			return res;
 		}
 
@@ -143,6 +154,11 @@ namespace Utility_Promus.Ricerca
 			List<Regex> figli;
             if (match.Success)
             {
+                //Salvo tutti i gruppi nominativi nel dizionario retrieved
+                foreach (string nome in re.GetGroupNames())
+                    retrieved.Add(nome, match.Groups[nome].Value);
+
+
 				if (relazioni.TryGetValue (re, out figli)) {
 					foreach (var f in figli) {
 						if (isRunning) tryMatch (f);
