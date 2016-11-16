@@ -96,7 +96,7 @@ namespace Utility_Promus
         };
         #endregion
 
-        readonly Regex fineParagrafo = new Regex("(?<txt>(?:.+?\n)+?)(?:\r?\n)+", RegexOptions.Compiled);
+        readonly Regex regexParagrafo = new Regex("(?<txt>(?:.+?\n)+?)(?:\r?\n)+", RegexOptions.Compiled);
         readonly Regex cognome_e_nome = new Regex(COGNOME + NOME, RegexOptions.Compiled);
         readonly Regex regexParentesi = new Regex(PARENTESI, RegexOptions.Compiled);
         readonly Regex regexFonti = new Regex(@"F(onti|ONTI)\:", RegexOptions.Compiled);
@@ -115,7 +115,7 @@ namespace Utility_Promus
         {
             this.testo = testo;
 			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
-			fineParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
+			regexParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
 			scannerDate = new Ricerca.Scanner (TipoFiltro.Data);
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
@@ -138,7 +138,7 @@ namespace Utility_Promus
             Console.WriteLine("***Inizio divisione in paragrafi...***\n");
 
             //Inizio Ricerca
-            match = fineParagrafo.Match(testo);
+            match = regexParagrafo.Match(testo);
 
             while (match.Success)
             {
@@ -246,7 +246,7 @@ namespace Utility_Promus
             entriesOk++;
 
             // Scrivo a Console
-            Console.Write("\nLeggo...\t{0}\t{1}", nome, cognome);
+            Console.Write("\nLEGGO: {0} {1}", nome, cognome);
             return true;
         }
 
@@ -264,10 +264,10 @@ namespace Utility_Promus
             idx_fine_parentesi = match.Index + match.Length;
 
             // 1) Nomi alternativi
-            nomiAlt = new List<string>(0);
             MatchCollection matchNomiAlt =
                 Regex.Matches(parentesi, @"«(?<nome>[\w\s\']+)»");
-            if (matchNomiAlt.Count > 0) Console.Write("\nDetto anche:");
+            if (matchNomiAlt.Count > 0) Console.Write("\nDetto anche: ");
+            nomiAlt = new List<string>(matchNomiAlt.Count);
             foreach (Match m in matchNomiAlt)
             {
                 nomiAlt.Add(m.Groups["nome"].Value);
@@ -431,7 +431,9 @@ namespace Utility_Promus
                     {
                         saveInfo(fraseInfo, dataInfo);
                         fraseInfo = matchFrase.Value;
-                        dataInfo = Pattern.Data;
+                        string[] gmxa = scannerDate.getInfos("gg", "xx", "mese", "aaaa");
+                        Data.TryParse(gmxa[0], gmxa[1] + gmxa[2], gmxa[3], out dataInfo);
+
                     }
                     else                        // Nessuna info in questa frase
                     {
@@ -446,8 +448,7 @@ namespace Utility_Promus
 
         void saveInfo (string descrizione, Data data)
         {
-            if (Pattern.Data!=null)
-                this.individuo.AddAttività(descrizione, TipoAttività.AUTO, data);
+            this.individuo.AddAttività(descrizione, TipoAttività.AUTO, data);
 
         }
 

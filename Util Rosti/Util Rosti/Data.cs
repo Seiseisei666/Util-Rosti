@@ -39,13 +39,24 @@ namespace Utility_Promus
 
         public Data (int g, int m, string anno)
         {
-            if (anno.Length != 4) throw new Exception(string.Format ("lunghezza stringa anno errata. Anno.Length: {0}",anno.Length));
-            string s, d, a; int S, D, A;
-            s = anno.Substring(0, 2); if (!int.TryParse(s, out S)) { throw new ArgumentException (string.Format("Prime due cifre dell'anno non valide. Anno:{0}", anno)); }
-            d = anno.Substring(2, 1); if (!int.TryParse(d,out D)) { d = "x"; D = -1; }
-            a = anno.Substring(3, 1); if (!int.TryParse(d, out A)) { a = "x"; A = -1; }
-            this.anno_string = s + d + a;
-            setData(g, m, S, D, A);
+            try
+            {
+                if (anno.Length != 4) throw new Exception(string.Format("lunghezza stringa anno errata. Anno.Length: {0}", anno.Length));
+                string s, d, a; int S, D, A;
+                s = anno.Substring(0, 2); if (!int.TryParse(s, out S)) { throw new ArgumentException(string.Format("Prime due cifre dell'anno non valide. Anno:{0}", anno)); }
+                d = anno.Substring(2, 1); if (!int.TryParse(d, out D)) { d = "x"; D = -1; }
+                a = anno.Substring(3, 1); if (!int.TryParse(d, out A)) { a = "x"; A = -1; }
+                this.anno_string = s + d + a;
+                setData(g, m, S, D, A);
+            }
+            catch (Exception)
+            {
+                //HACK: fare il parse di un intervallo anni?
+                System.Diagnostics.Debug.WriteLine(anno);
+                var match = Regex.Match(anno, @"\d\d\d\d");
+                this.anno_string = match.Value;
+                setData(g, m, int.Parse(anno_string.Substring(0, 2)), int.Parse(anno_string.Substring(2, 1)), int.Parse( anno_string.Substring(3, 1)));
+            }
         }
 
         public override string ToString()

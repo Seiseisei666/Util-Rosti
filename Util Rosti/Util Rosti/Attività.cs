@@ -45,6 +45,7 @@ namespace Utility_Promus
         /// </summary>
         public Attività (Individuo ind, string descrizione,TipoAttività tipo, Data data)
         {
+            if (data == null) throw new ArgumentNullException("data");
             this.id = ++count;
             this.individuo = ind;
             this.descrizione = descrizione;

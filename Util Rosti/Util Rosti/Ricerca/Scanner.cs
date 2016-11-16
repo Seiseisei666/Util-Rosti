@@ -145,7 +145,7 @@ namespace Utility_Promus.Ricerca
             {
 				if (relazioni.TryGetValue (re, out figli)) {
 					foreach (var f in figli) {
-						tryMatch (f);
+						if (isRunning) tryMatch (f);
 					}
 				} 
 				else {
