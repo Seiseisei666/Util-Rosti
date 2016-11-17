@@ -155,9 +155,8 @@ namespace Utility_Promus.Ricerca
             if (match.Success)
             {
                 //Salvo tutti i gruppi nominativi nel dizionario retrieved
-                foreach (string nome in re.GetGroupNames())
-                    retrieved.Add(nome, match.Groups[nome].Value);
-
+				foreach (string nome in re.GetNamedGroupsNames()) 
+					retrieved.Add(nome, match.Groups[nome].Value);
 
 				if (relazioni.TryGetValue (re, out figli)) {
 					foreach (var f in figli) {

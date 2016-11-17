@@ -68,6 +68,26 @@ namespace Utility_Promus
 
             }
         
+
+		public static List<string> GetNamedGroupsNames (this System.Text.RegularExpressions.Regex re)
+		{
+			
+			string[] names = re.GetGroupNames ();
+			if (!names.Any ())
+				return null;
+			
+			List<string> res = new List<string> (names.Length);
+
+			foreach (string name in re.GetGroupNames())
+			{
+				int i;
+				if (!int.TryParse(name, out i)) res.Add (name);
+			}
+
+			return res;
+		}
+
+
         }
 
     }

@@ -3,16 +3,16 @@ Data;gg.xx.aaaa;.*?(?<gg>\d\d?)°?[\s\.]{1,2}(?<xx>[IVX]{1,4})[\s\.]{1,2}(?<aaaa>
 Data;gg mese aaaa;.*?(?<gg>\d\d ?)°?[\s\.]{1,2}(?<mese>(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\b[\s\.]{1,2}(?<aaaa>\d\d[\d\.?]{2});1;
 Data;mese aaaa;.*?(?<mese>(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\s(?<aaaa>\d\d[\d\.?]{2});2;
 Data;intervallo anni;.*?(?<aaaa>\d{4}[\-\/\s]{1,3}\d{4});3;
-Data;prima;\b?(?<pos>[Pp]rima\sd(?:i|el)\s|[Ee]ntro\s(?:il\s\s|la\s|l'));4;0,1,2,3
-Data;fino a;\b?(?<pos>[SFsf]ino\sal?|[Ee]ntro\s(?:il\s|la\s|l'));5;0,1,2,3
-Data;a partire da;\b?(?<pos>(?:[Aa]\spartire\s)?[Dd]a(?:l\s|\s|ll')|[Dd]opo\s(?:il\s|la\s|l'));6;0,1,2,3
-Data;dopo il;\b?(?<pos>[Dd]opo\s(?:il|la\s|l'));7;0,1,2,3
-Data;il;\b?(?<pos>[Ii]l|[Nn]el);8;0,1,2,3
-Data;intorno a;\b?(?<pos>[Ii]ntorno\sa(?:l?\s|ll')|[Cc]irca\b);9;0,1,2,3
-Data;intorno a;\b?(?<pos>[Ss]ul\sfinire\sd(?:i|el?)\b);10;2
-Data;tra il e;(?:[TFtf]ra\s(?<pos>il\s|l').+?)(?=e\s(?<pos2>il\s|l'));11;0,1,2,3
-Data;tra il e;(?:(?<pos>[Dd]al\s).+?(?<pos2>al));12;0,1,2,3
-Data;ammesso;\b?(?<pos>a\.\s?);13;0,1,2,3
-Data;dimesso;"\b?(?<pos>d\.\s?)""";14;0,1,2,3
+Data;prima;\b?[Pp]rima\sd(?:i|el)\s|[Ee]ntro\s(?:il\s\s|la\s|l');4;0,1,2,3
+Data;fino a;\b?(?:[SFsf]ino\sal?|[Ee]ntro\s(?:il\s|la\s|l'));5;0,1,2,3
+Data;a partire da;\b?(?:(?:[Aa]\spartire\s)?[Dd]a(?:l\s|\s|ll')|[Dd]opo\s(?:il\s|la\s|l'));6;0,1,2,3
+Data;dopo il;\b?(?:[Dd]opo\s(?:il|la\s|l'));7;0,1,2,3
+Data;il;\b?(?:[Ii]l|[Nn]el);8;0,1,2,3
+Data;intorno a;\b?(?:[Ii]ntorno\sa(?:l?\s|ll')|[Cc]irca\b);9;0,1,2,3
+Data;intorno a;\b?(?:[Ss]ul\sfinire\sd(?:i|el?)\b);10;2
+Data;tra il e;(?:[TFtf]ra\s(?:il\s|l').+?)(?=e\s(?<pos2>il\s|l'));11;0,1,2,3
+Data;tra il e;(?:(?:[Dd]al\s).+?(?<pos2>al));12;0,1,2,3
+Data;ammesso;\b?(?:a\.\s?);13;0,1,2,3
+Data;dimesso;\b?(?:d\.\s?);14;0,1,2,3
 Salario;scudi;\(?V\s\(?<paga>d\d?)\sal\s(?<ogni>mese)\)?;15;
 Fonti;I&E;\(I&E.+\);16;
