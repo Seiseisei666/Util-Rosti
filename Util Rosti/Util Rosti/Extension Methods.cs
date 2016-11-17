@@ -21,7 +21,7 @@ namespace Utility_Promus
                     helper = helper + (s.Substring(0, 1).ToUpper() + s.Substring(1).ToLower() + " ");
                 else helper = helper + s.ToUpper() + " ";
 
-            return helper;
+			return helper.Trim();
         }
 
         public static int ToArabic (this string str)

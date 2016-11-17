@@ -30,9 +30,9 @@ namespace Utility_Promus
 
         Individuo individuo;
         string paragrafo, nome, cognome, floruit;
-        Data dataNascita, dataMorte;
+
         string[] luoghiDiOrigine;
-		List<Match> informazioni;
+
         // Filtri Paragrafo ---------------------------------------
         //HACK: controllare eccezioni ("COGNOME o VARIANTE", 
         // in un secondo momento anche i NOMI GENERICI tipo "Bernardino [I]
