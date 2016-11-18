@@ -9,6 +9,9 @@ namespace Utility_Promus
     public static class Extension_Methods
 
     { 
+        /// <summary>
+        /// Restituisce la stringa con le iniziali maiuscole (Es. In Questo Modo)
+        /// </summary>
         public static string ToCapitalCase (this string str)
         {
             if (str.Length < 2) return str;
@@ -24,6 +27,20 @@ namespace Utility_Promus
 			return helper.Trim();
         }
 
+        /// <summary>
+        /// Rimuove tutte le ricorrenze di un dato char nella stringa
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="c">predefinito: spazio</param>
+        public static string RemoveSpaces(this string str)
+        {
+            return str.Where (c => !char.IsWhiteSpace(c)).ToString();
+        }
+
+        /// <summary>
+        /// Converte i numeri romani in cifre arabe
+        /// </summary>
+        /// <returns>restituisce 0 se l'input non è valido</returns>
         public static int ToArabic (this string str)
         {
             if (str.Equals(string.Empty)) return 0;
@@ -68,7 +85,9 @@ namespace Utility_Promus
 
             }
         
-
+        /// <summary>
+        /// Restituisce tutti i gruppi nominativi di una regex (cioè quelli che non sono numerici)
+        /// </summary>
 		public static List<string> GetNamedGroupsNames (this System.Text.RegularExpressions.Regex re)
 		{
 			
@@ -86,6 +105,14 @@ namespace Utility_Promus
 
 			return res;
 		}
+
+        /// <summary>
+        /// Restituisce la posizione finale di un dato match
+        /// </summary>
+        public static int EndPosition (this System.Text.RegularExpressions.Match match)
+        {
+            return match.Length + match.Index - 1;
+        }
 
 
         }

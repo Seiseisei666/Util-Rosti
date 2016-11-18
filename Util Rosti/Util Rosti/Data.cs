@@ -133,24 +133,16 @@ namespace Utility_Promus
             int g = 0; int m = 0; int a = 0;
             int.TryParse(gg, out g);
             //Mese
-            if (string.IsNullOrEmpty(mese)) m = 0;
-            else
+            int risultato; int cambioAnno = 0;
+            if (int.TryParse(mese, out risultato))
             {
-                if (mese.Length<=4)
-                        m = mese.ToArabic();
-                else
-                {
-                    foreach (Mesi nome_mese in Enum.GetValues(typeof(Mesi)))
-                        if (mese.ToCapitalCase() == nome_mese.ToString())
-                        {
-                            m = (int)nome_mese;
-                            break;
-                        }
-                }
+                if (risultato > 12) { risultato = risultato - 12; cambioAnno = 1; }
+                else if (risultato <= 0) { risultato = 12 + risultato; cambioAnno = -1; }
             }
+            else m = Data.MeseToInt(mese);
             
             if (int.TryParse(anno, out a))
-                data = new Data(g, m, a);
+                data = new Data(g, m, a+cambioAnno);
             else try
                 {
                     data = new Data(g, m, anno);
@@ -163,7 +155,27 @@ namespace Utility_Promus
             return true;
 
         }
-			
+
+			public static int MeseToInt (string mese)
+        {
+            if (string.IsNullOrEmpty(mese))
+                return 0;
+            
+            else
+            {
+                if (mese.Length <= 4)
+                    return mese.ToArabic();
+                else
+                {
+                    foreach (Mesi nome_mese in Enum.GetValues(typeof(Mesi)))
+                        if (mese.ToCapitalCase() == nome_mese.ToString())
+                        {
+                            return (int)nome_mese;
+                        }
+                }
+            }
+            return 0;
+        }
 
         //		public static readonly Regex [] Formati = 
         //		{
