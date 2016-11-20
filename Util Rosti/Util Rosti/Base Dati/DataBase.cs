@@ -14,33 +14,18 @@ namespace Utility_Promus.Base_Dati
         Dictionary
             <string,                    
                 Dictionary<string,
-                    List<Tuple<string,int>>>>
+                    List<string>>>
           
             _tabelle;
 
         public DataBase()
         {
-            _tabelle = new Dictionary<string, Dictionary<string, List<Tuple<string, int>>>>(16);
+            _tabelle = new Dictionary<string, Dictionary<string, List<string>>>(16);
         }
         
         public void ImportTable (string nome, Dictionary<string,List<string>> tabella)
         {
-            int row = 0;
-            var new_tab = new Dictionary<string, List<Tuple<string, int>>>(tabella.Count);
-
-
-            foreach (string key in tabella.Keys)
-            {
-                var lista = new List<Tuple<string, int>>(tabella[key].Count);
-                row = 0;
-                foreach (var s in tabella[key])
-                    lista.Add(new Tuple<string, int>(s, row++));
-
-                new_tab.Add(key, lista);
-            }
-
-            _tabelle.Add(nome, new_tab);
-
+            _tabelle.Add(nome, tabella);
         }
 
         /// <summary>
@@ -48,31 +33,33 @@ namespace Utility_Promus.Base_Dati
         /// </summary>
         public List <string> GetValues (string tabella, string campo)
         {
-            Dictionary<string, List<Tuple<string,int>>> _tabella;
-            List<Tuple<string,int>> risultati;
+            Dictionary<string, List<string>> _tabella;
+            List<string> risultati;
 
             if (_tabelle.TryGetValue(tabella, out _tabella))
             {
                 if (_tabella.TryGetValue(campo, out risultati))
                 {
-                    var vals = risultati.Select(r => r.Item1);
-                    return vals.ToList();
+                    return risultati;
                 }
             }
             return null;
         }
 
+
         public Dictionary<string,string> Entry (string tabella, string query)
         {
-            Dictionary<string, List<Tuple<string,int>>> _tabella;
+
+
+            Dictionary<string, List<string>> _tabella;
             Dictionary<string, string> risultati;
             int index = -1;
 
             if (_tabelle.TryGetValue(tabella, out _tabella))
             {
-                foreach (var list in _tabella.Values)
+                foreach (var valori in _tabella.Values)
                 {
-                    index = list.First(t => t.Item1 == query).Item2;
+                    index = valori.IndexOf(valori.First(v => v == query));
                     if (index >= 0) break;
                 }
 
@@ -82,7 +69,7 @@ namespace Utility_Promus.Base_Dati
 
                 foreach (var field in _tabella.Keys)
                 {
-                    risultati.Add(field, _tabella[field][index].Item1);
+                    risultati.Add(field, _tabella[field][index]);
                 }
                 return risultati;
             }
