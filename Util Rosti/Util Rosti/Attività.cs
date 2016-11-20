@@ -43,7 +43,7 @@ namespace Utility_Promus
         /// <summary>
         /// Costruttore evento con data puntuale
         /// </summary>
-        public Attività (Individuo ind, string descrizione,TipoAttività tipo, Data data)
+        public Attività (Individuo ind, string descrizione,TipoData tipo, Data data)
         {
             if (data == null) throw new ArgumentNullException("data");
             this.id = ++count;
@@ -52,8 +52,22 @@ namespace Utility_Promus
             this.inizioMin = data;
             this.inizioMax = data;
             this.puntuale = true;
-            this.tipoInizio = TipoData.il;
-            this.tipo = tipo;
+            this.tipoInizio = tipo;
+            this.tipo = TipoAttività.AUTO;
+        }
+
+        public Attività(Individuo ind, string descrizione,Data inizio, Data fine)
+        {
+            this.id = ++count;
+            this.individuo = ind;
+            this.descrizione = descrizione;
+            this.inizioMin = inizio;
+            this.inizioMax = inizio;
+            this.fineMin = fine;
+            this.fineMax = fine;
+            this.puntuale = true;
+            this.tipoInizio = TipoData.tra;
+            this.tipo = TipoAttività.AUTO;
         }
 
         public string GetDescrizione ()
@@ -64,7 +78,7 @@ namespace Utility_Promus
             }
 
             else
-                throw new NotImplementedException("eventi non puntuali");
+                return "Tra il " + inizioMin.ToString() + " e il " + fineMin.ToString() + ": '" + descrizione + "'";
 
         }
     }

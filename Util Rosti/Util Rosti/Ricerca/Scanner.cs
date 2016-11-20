@@ -9,12 +9,13 @@ using Utility_Promus;
 
 namespace Utility_Promus.Ricerca
 {
-    class Scanner
+    class Scanner: IRetriever
     {
 
 		public bool Success {get; private set;}
 
         event EventHandler onMatchSucceeded;
+        public event EventHandler OnInfoRetrieved;
 
         /// <summary>
         /// Dizionario che mantiene in memoria tutti i gruppi nominativi di ogni singola ricerca
@@ -26,14 +27,17 @@ namespace Utility_Promus.Ricerca
         /// </summary>
         Dictionary<string, string> _cache;
 
-        string _testo;
+        string _frase;
 
-        bool _isRunning;
+        bool _isRunning = false;
+
+        bool continuazione_info = false;
 
         /// <summary>
-        /// Puntatore all'ultimo match
+        /// Puntatore all'ultimo match e all'ultimo regex usati
         /// </summary>
         Match _ma;
+        Regex _re;
 
         /// <summary>
         /// Tutti i pattern più generali, che non sono figli di nessun altro
@@ -77,7 +81,6 @@ namespace Utility_Promus.Ricerca
                     string figli = reader.GetField("CHILDREN");
                 string script_azioni = reader.GetField("SCRIPT");
                     int id = reader.GetField<int>("ID");
-                Console.WriteLine(script_azioni);
 
 					//Trasformo il formato N,N,... del campo children in un array di int
 					var idsFigli = 
@@ -91,7 +94,7 @@ namespace Utility_Promus.Ricerca
                 #region SCRIPT
 
                 //script_azioni = script_azioni.RemoveSpaces();            //Tolgo gli spazi bianchi
-                MatchCollection cmds = Regex.Matches(script_azioni, @"(?<cmd>[A-Z_]+)(?<params>\([\w\,]+\))?\,?");
+                MatchCollection cmds = Regex.Matches(script_azioni, @"(?<cmd>[A-Z_]+)(?:\((?<params>[\w\,_]+)\))?\,?");
                 var comandi = new List<Tuple<Action<string>,string>>(cmds.Count);
                 foreach (Match m in cmds)
                 {
@@ -158,40 +161,52 @@ namespace Utility_Promus.Ricerca
 			filtri0 = pattern_generali.Select(
 				p => regex_generati [p.Key])
 				.ToArray();
-            
+
+            Reset();
         }
 
         void initialize()
         {
-            this.onMatchSucceeded = null;
-            this._cache = retrieved;
-            this.retrieved.Clear();
             this._isRunning = true;
             this.Success = false;
         }
 
         void stop (bool success)
         {
+            continuazione_info = true;
             this._isRunning = false;
             this.Success = success;
-            if (success && onMatchSucceeded != null)
-                this.onMatchSucceeded.Invoke(this, null);
+            retrieved["testo"] += _frase;
+        }
+
+        public void Reset ()
+        {
+            this._cache = retrieved;
+            this.retrieved = new Dictionary<string, string>();
+            retrieved["testo"] = "";
+            this.onMatchSucceeded = null;
+            this._isRunning = false;
+            this.Success = false;
+            continuazione_info = false;
         }
 
         /// <summary>
         /// Comincia la scansione del testo
         /// </summary>
-        public void Scan (string testo)
+        public void Scan (string frase)
         {
-            this._testo = testo;
             initialize();
+            this._frase = frase;
+
             foreach (var re in filtri0)
             {
 				if (_isRunning)
 					tryMatch (re);
 				else
-					return;
+					break;
             }
+            if (continuazione_info && !Success)
+                retrieved["testo"] += _frase;
         }
         
         /// <summary>
@@ -200,29 +215,52 @@ namespace Utility_Promus.Ricerca
         /// <param name="re"></param>
         void tryMatch (Regex re)
         {
-            Match match = re.Match(_testo);
+            Match match = re.Match(_frase);
             _ma = match;
-			Tuple<List<Regex>,List<Tuple<Action<string>,string>>> figli;
+            _re = re;
+			Tuple<List<Regex>,List<Tuple<Action<string>,string>>> relazioni_re;
+
+
             if (match.Success)
             {
+                relazioni.TryGetValue(re, out relazioni_re);
+                if (relazioni.ContainsKey(re))
+                    relazioni_re = relazioni[re];
+                bool fine_catena =  relazioni_re == null || !relazioni_re.Item1.Any();
+
+
+                //Fine catena: info trovata
+                if (fine_catena)
+                {
+                    if (continuazione_info) Flush();
+                    stop(true);
+                }
+
                 //Aggiungo le voci trovate al dizionario Retrieved
-				foreach (string nome in re.GetNamedGroupsNames()) 
-					retrieved.Add(nome, match.Groups[nome].Value);
+                foreach (string nome in re.GetNamedGroupsNames())
+                    retrieved[nome] = match.Groups[nome].Value;
 
-
-                if (relazioni.TryGetValue(re, out figli))
-                {   //Eseguo eventuali azioni associate al filtro
-                    foreach (var cmds in relazioni[re].Item2)
+                if (relazioni_re != null)
+                {
+                    //Eseguo i comandi
+                    foreach (var cmds in relazioni_re.Item2)
                         cmds.Item1.Invoke(cmds.Item2);
 
                     //Chiamate ricorsive
-                    foreach (var f in figli.Item1)
+                    foreach (var f in relazioni_re?.Item1)
                     {
                         if (_isRunning) tryMatch(f);
-                    }
+                        else return;
+                    } 
                 }
-                else stop(match.Success);
             }
+        }
+
+        public void Flush ()
+        {
+            onMatchSucceeded?.Invoke(this, null);
+            OnInfoRetrieved?.Invoke(this, null);
+            retrieved["testo"] = "";
         }
 
         /// <summary>
@@ -300,18 +338,37 @@ namespace Utility_Promus.Ricerca
 
             onMatchSucceeded += (s, e) =>
             {
+
                 _ma = _ma.NextMatch();
                 if (_ma.Success)
                 {
-                    foreach (var key in keys)
+                    foreach (var nome in _re.GetNamedGroupsNames())
                     {
-                        string key_fine = key + "-fine";
-                        retrieved.Add(key_fine, _ma.Groups[key].Value);
+                        string key = nome + "-inizio";
+                        retrieved[key] = retrieved[nome];
+                        key = nome + "-fine";
+                        retrieved[key] = _ma.Groups[nome].Value;
                     }
                 }
             };
         }
 
+        public void SET_VAL (string param)
+        {
+            string[] split = param.Split(',');
+            if (split.Count() < 2) return;
+            string gr, val;
+            gr = split[0];
+            val = split[1];
+            retrieved[gr] = val;
+        }
+
         #endregion
+    }
+
+    public interface IRetriever
+    {
+        string getInfo(string par);
+        string[] getInfos(params string [] gr);
     }
 }

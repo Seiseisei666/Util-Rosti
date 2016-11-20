@@ -117,6 +117,7 @@ namespace Utility_Promus
 			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
 			regexParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
 			scannerDate = new Ricerca.Scanner ("Data");
+            scannerDate.OnInfoRetrieved += retrieveInfo;
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 
@@ -298,7 +299,7 @@ namespace Utility_Promus
                 match = Regex.Match(parentesi, MATCH_DATA_NASCITA);
                 if (match.Success && Data.TryParse(match.Groups["data"].Value, out data))
                 {
-                    individuo.AddAttività("Nascita", TipoAttività.nascita, data);
+                   //******************************* individuo.AddAttività("Nascita", TipoAttività.nascita, data);
                     Console.Write("\nNato nel {0}\t", data.ToString());
                 }
             }
@@ -319,7 +320,7 @@ namespace Utility_Promus
 			if (morte && match!=null && match.Success)
                 if (Data.TryParse(match.Groups["data"].Value, out data))
                 {
-                    individuo.AddAttività("Morte", TipoAttività.morte, data);
+                //*************************************    individuo.AddAttività("Morte", TipoAttività.morte, data);
                     Console.Write("Morto nel {0}", data.ToString());
                 }
                 else logErroreEstrazione(match.Groups["data"].Value, "Data morte illegibile");
@@ -348,7 +349,6 @@ namespace Utility_Promus
             string parola;						//locale per singola parola dell'header
 			bool fonti, biblio;					//Sono presenti le sezioni Fonti e Biblio?
 			MatchCollection matches_frasi;		//locale per identificare ogni singola frase del corpo testo
-            bool continuazione_info = false;	//la frase non significativa che sto leggendo è continuazione di una info contenuta nel periodo precedente?
 
             //************** Analizzo fino al primo ritorno a capo: 
             //Info Voce, parentele, altre notizie semplic
@@ -401,54 +401,56 @@ namespace Utility_Promus
             if (biblio) filtro += BIBLIOGRAFIA;
             match = Regex.Match(body, filtro);
             string corpo = match.Groups ["corpo"].Value; //TODO: vale la pena dividere  fra header body biblio e fonti prima, all'inizio del metodo
-            
-			//Setup per l'analisi delle info
 
-			bool info_trovata = false;
-            Data dataInfo = null;
+            //Setup per l'analisi delle info
             MatchCollection ritorniAcapo = Regex.Matches(corpo, @".+?\r?\n");
             foreach (Match paragrafetto in ritorniAcapo)
             {
-                string fraseInfo = "";
-				continuazione_info = false;
-                info_trovata = false;
+                scannerDate.Reset();
                 matches_frasi = rxSingolaFrase.Matches(paragrafetto.Value);
                 foreach (Match matchFrase in matches_frasi)
                 {
+                    Ricerca.IRetriever retrievedInfo = scannerDate;
 					scannerDate.Scan (matchFrase.Value);
-					info_trovata = scannerDate.Success;
-                    if (info_trovata   // In questa frase c'è una data valida, prima notizia letta nel par
-                        && !continuazione_info)
-                    {
-                        continuazione_info = true;
-                        fraseInfo = matchFrase.Value;
-
-						string[] gmxa = scannerDate.getInfos ("gg", "xx", "mese", "aaaa");
-						Data.TryParse(gmxa[0],gmxa[1]+gmxa[2], gmxa[3], out dataInfo);
-                    }
-                    else if (info_trovata
-                        &&continuazione_info)  // In questa frase c'è una dta valida, relativa ad una nuova notizia
-                    {
-                        saveInfo(fraseInfo, dataInfo);
-                        fraseInfo = matchFrase.Value;
-                        string[] gmxa = scannerDate.getInfos("gg", "xx", "mese", "aaaa");
-                        Data.TryParse(gmxa[0], gmxa[1] + gmxa[2], gmxa[3], out dataInfo);
-
-                    }
-                    else                        // Nessuna info in questa frase
-                    {
-                        if (continuazione_info) fraseInfo += matchFrase.Value;
-                    }
-
                 }
-                if (!string.IsNullOrEmpty(fraseInfo))
-                    saveInfo(fraseInfo, dataInfo);
+                if (scannerDate.Success) scannerDate.Flush();
             }
         }
 
-        void saveInfo (string descrizione, Data data)
+        void retrieveInfo (object sender, EventArgs e)
         {
-            this.individuo.AddAttività(descrizione, TipoAttività.AUTO, data);
+            Ricerca.IRetriever result = (Ricerca.IRetriever)sender;
+            Data dataInizio, dataFine;
+            string g_i, m_i, a_i, g_f, m_f, a_f;
+            TipoData tipoData;
+            string tipoAttività;
+            string descrizione = result.getInfo("testo");
+
+            tipoData = (TipoData)int.Parse(result.getInfo("tipo_data"));
+
+            if (tipoData== TipoData.tra)
+            {
+                g_i = result.getInfo("gg-inizio");
+                m_i = result.getInfo("mese-inizio");
+                a_i = result.getInfo("aaaa-inizio");
+                g_f = result.getInfo("gg-fine");
+                m_f = result.getInfo("mese-fine");
+                a_f = result.getInfo("aaaa-fine");
+
+                Data.TryParse(g_i, m_i, a_i, out dataInizio);
+                Data.TryParse(g_f, m_f, a_f, out dataFine);
+                this.individuo.AddAttività(new Attività(individuo, descrizione, dataInizio, dataFine));
+            }
+
+            else
+            {
+                g_i = result.getInfo("gg");
+                m_i = result.getInfo("mese");
+                a_i = result.getInfo("aaaa");
+                Data.TryParse(g_i, m_i, a_i, out dataInizio);
+                individuo.AddAttività(new Attività(individuo, descrizione, tipoData, dataInizio));
+            }
+            
 
         }
 
