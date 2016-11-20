@@ -101,9 +101,9 @@ namespace Utility_Promus
             voce_o_strumento.Add(voce);
         }
 
-        public void AddAttività (string descrizione,TipoAttività tipo, Data data)
+        public void AddAttività (Attività a)
         {
-            attività.Add(new Attività(this, descrizione, tipo, data));
+            attività.Add(a);
         }
 
 		public string GetDescrizione ()
