@@ -47,6 +47,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attività.cs" />
+    <Compile Include="Base Dati\DataBase.cs" />
+    <Compile Include="Base Dati\DBImporter.cs" />
+    <Compile Include="Base Dati\DizionarioNumerato.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="Extension Methods.cs" />
@@ -67,6 +70,7 @@
     <None Include="App.config" />
     <None Include="packages.config" />
     <None Include="Properties\Resources\filtri.CSV" />
+    <None Include="Properties\Resources\schema.csv" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -82,7 +86,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <Folder Include="Base Dati\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

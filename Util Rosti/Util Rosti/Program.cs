@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Utility_Promus.Base_Dati;
 using CsvHelper;
 
 namespace Utility_Promus
@@ -15,9 +15,7 @@ namespace Utility_Promus
     {
         public static Dictionary<Tuple<string, string>, string> Tabelle_Helper { get; private set; }
 
-        static readonly string pathDbIndividui = @"Resources\individui (1).csv";
-        static readonly string pathDbAttività = @"Resources\attivita.csv";
-        string pathDbHelper = "xtabserv.dat";
+        static readonly string pathDb = @"data.bin";
         static readonly string header = @"
          ___________________________________
         ***********************************)
@@ -34,8 +32,10 @@ namespace Utility_Promus
         {
             Init();
             Console.Write(header);
-            //GetSelection();
-			Parse("dizionario.txt");
+            GetSelection();
+            //Parse("dizionario.txt");
+            Console.WriteLine("\nPremere un tasto per uscire dal programma.");
+            Console.ReadKey();
         }
 
 
@@ -96,12 +96,37 @@ namespace Utility_Promus
         INIZIALIZZAZIONE IN CORSO...");
 
             string txt = "";
-            if (File.Exists(pathDbIndividui)) txt = "\n - Database individui identificato...";
-            else txt += "\n - ATTENZIONE!!! Database individui non presente!";
-            if (File.Exists(pathDbAttività)) txt = "\n - Database attività identificato...";
-            else txt += "\n - ATTENZIONE!!! Database attività non presente!";
+            bool dbPres = File.Exists(pathDb);
+            if (dbPres) txt = "\n - Database identificato...";
+            else txt += "\n - ATTENZIONE!!! Database non presente!";
             Console.Write(txt);
-            return;
+
+            DataBase _database;
+
+            Console.WriteLine("\nCaricamento database in corso...");
+
+            //Caricamento DB
+            try
+            {
+                using (FileStream stream = new FileStream(pathDb, FileMode.Open))
+                {
+                    var bformatter = new BinaryFormatter();
+                    _database = (DataBase)bformatter.Deserialize(stream);
+                }
+
+                var nomi = _database.GetValues("individui", "ind_nome");
+
+                for (int i = 0; i < 100; i++)
+                    Console.WriteLine(nomi[i]);
+            }
+
+            catch (Exception e)
+            {
+                Console.WriteLine("Impossibile caricare il database. Errore di lettura file");
+                Console.WriteLine("Messaggio di errore:\n" + e.Message);
+            }
+
+                return;
 
         }
 
@@ -110,13 +135,14 @@ namespace Utility_Promus
             string txt = @"
 
     -a filename.txt : Analizza un dizionario dei cantori e ne estrae le informazioni
-    -i filename.csv : Carica un nuovo file di database dei cantori
-    -t filename.csv : Carica un nuovo file di database di eventi biografici 
+    -i filename.csv : Carica un nuovo file di database
     -q              : Esce dal programma
 
     :>";
             Console.Write(txt);
-            var args = "a dizionario.txt";
+            // var args = "a dizionario.txt";
+
+            var args = Console.ReadLine();
 
             string cmd; string param;
             cmd = args.Substring(0, 1);
@@ -132,7 +158,7 @@ namespace Utility_Promus
                     break;
 
                 case ("I"):
-                    LoadDb(param, true);
+                    LoadDb(param);
                     break;
                 case ("Q"):
                     return;
@@ -141,9 +167,13 @@ namespace Utility_Promus
 
         }
 
-        static void LoadDb(string path, bool individui)
+        static void LoadDb(string path)
         {
-
+            DBImporter importer = new DBImporter(path);
+            
+                importer.StartImport();
+           
+            importer.Save();
         }
 
         static void LoadHelperTables(string file)

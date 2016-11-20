@@ -1,0 +1,14 @@
+Archivi;arc_id;arc_sigla;arc_nome;arc_indirizzo;arc_citta;arc_nazione;arc_riferimenti;arc_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;
+Attivita;att_id;ind_id;loc_id;att_indirizzo;att_puntuale;att_data_ini_tipo;att_data_fine_tipo;att_data_ini_min;att_data_ini_max;att_data_fine_min;att_data_fine_max;att_dt_ini_min_lav;att_dt_ini_max_lav;att_dt_fine_min_lav;att_dt_fine_max_lav;att_desc;att_occasione;att_speocc;att_istituzione;att_tipo;att_incarico;att_strumento;att_registro;att_stabile;att_sal_imp;att_sal_divisa;att_sal_tipo;att_incert;att_note;X0VERN;XUTEN;XDTAGG
+codele;X0VERN;XCODTAB;XCODELE;XDESCELE;XPARAMETRI;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;;
+decod;X0VERN;XCODTAB;XDESCDECO;XUTEMOD;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Documenti;doc_id;doc_sigla;doc_tipo;doc_forma;doc_autore;doc_titolo;doc_rivista;doc_pag;doc_serie;doc_luogo;doc_editore;doc_anno;doc_note;arc_id;doc_collocazione;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;
+Individui;ind_id;ind_nome;ind_att_prevalente;ind_musicista;ind_sesso;ind_provenienza;ind_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;
+Legami;leg_id;ind_id;ind2_id;att_id;leg_tipo;leg_parente;leg_note;leg_incert;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;
+Localita;loc_id;loc_desc;prov_sigla;prov_cod_reg;prov_cod_stato;loc_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;
+Nomi_alternativi;nom_id;ind_id;nom_nome;nom_tipo;nom_incert;nom_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;
+rif_attivita;rif_att_id;att_id;doc_id;rif_att_pag;rif_att_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
+rif_individui;rif_ind_id;ind_id;doc_id;rif_ind_pag;rif_ind_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
+rif_legami;rif_legami_id;leg_id;doc_id;rif_pag;rif_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
+rif_nomi;nom_id;doc_id;rif_nom_pag;rif_nom_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;;
+titoli;titoli_id;ind_id;tit_titolo;tit_incert;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;;

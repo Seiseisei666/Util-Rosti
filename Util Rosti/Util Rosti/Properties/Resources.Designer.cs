@@ -61,13 +61,26 @@ namespace Utility_Promus.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to TIPO;DESCR;REGEX;ID;CHILDREN
-        ///Data;;;;
-        ///.
+        ///   Looks up a localized string similar to TIPO;DESCR;REGEX;ID;CHILDREN;SCRIPT
+        ///Data;gg.xx.aaaa;(?&lt;gg&gt;\d\d?)°?[\s\.]{1,2}(?&lt;mese&gt;[IVX]{1,4})[\s\.]{1,2}(?&lt;aaaa&gt;\d\d[\d\.?]{2});0;;
+        ///Data;gg mese aaaa;(?&lt;gg&gt;\d\d ?)°?[\s\.]{1,2}(?&lt;mese&gt;(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\b[\s\.]{1,2}(?&lt;aaaa&gt;\d\d[\d\.?]{2});1;;
+        ///Data;mese aaaa;(?&lt;mese&gt;(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt]o))))\s(?&lt;aaaa&gt;\d\d[\d\.?]{2});2;;
+        ///Data;aaaa;(?&lt;aaaa&gt;\d\d[\d?.]{2});3;;
+        ///Data;gg mese;(?&lt;gg&gt;\d\d ?)°?[\s\.]{1,2}(?&lt;mese&gt;(?i:[gfmalsond]\w{2,6}(?:(?:[rl]e)|(?:[iznt] [rest of string was truncated]&quot;;.
         /// </summary>
         public static string filtri {
             get {
                 return ResourceManager.GetString("filtri", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ArchiviI;arc_id;arc_sigla;arc_nome;arc_indirizzo;arc_citta;arc_nazione;arc_riferimenti;arc_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;
+        ///Attivit?;att_id;ind_id;loc_id;att_indirizzo;att_puntuale;att_data_ini_tipo;att_data_fine_tipo;att_data_ini_min;att_data_ini_max;att_data_fine_min;att_data_fine_max;att_dt_ini_min_lav;att_dt_ini_max_lav;att_dt_fine_min_lav;att_dt_fine_max_lav;att_desc;att_occasione;att_speocc;att_istituzione;att_tipo;att_incarico;att_strumento;att_registro;att_stabile;att_sal_imp;att_sal_d [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string schema {
+            get {
+                return ResourceManager.GetString("schema", resourceCulture);
             }
         }
     }
