@@ -76,6 +76,32 @@ namespace Utility_Promus.Base_Dati
             return null;
         }
 
+        public dynamic GetRecord (string tabella, string query)
+        {
+            Dictionary<string, List<string>> _tabella;
+
+            if (_tabelle.TryGetValue (tabella, out _tabella))
+            {
+                var index =
+                    (from key in _tabella.Keys
+                     from val in _tabella[key]
+                     where val == query
+                     select _tabella[key].IndexOf(val)).First();
+
+                var result =
+                    from key in _tabella.Keys
+                    select new
+                    {
+                        field = key,
+                        value = _tabella[key][index]
+                    };
+
+                return result;
+            }
+
+            return null;
+        }
+
 
 
     }
