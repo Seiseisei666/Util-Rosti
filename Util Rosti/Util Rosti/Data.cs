@@ -68,7 +68,11 @@ namespace Utility_Promus
             {
                 return string.Format("{0}/{1}/{2}", g, m, anno_string);
             } }
-		public string AAAA_MM_GG()
+
+		/// <summary>
+		/// Formato della data in uso nel DB
+		/// </summary>
+		public string FormatoDB()
 		{
 			string formato = anno_string+"/";
 			formato += ((m > 0 ? m.ToString() : "xx") + "/" + (g > 0 ? g.ToString() : "xx"));

@@ -30,10 +30,10 @@ namespace Utility_Promus
 
         static void Main(string[] args)
         {
-            Init();
+            //Init();
             Console.Write(header);
-            GetSelection();
-            //Parse("dizionario.txt");
+            //GetSelection();
+            Parse("dizionario.txt");
             Console.WriteLine("\nPremere un tasto per uscire dal programma.");
             Console.ReadKey();
         }
@@ -53,7 +53,7 @@ namespace Utility_Promus
 
             try
             {
-                file = File.ReadAllText(filename);
+				file = File.ReadAllText(filename, Encoding.Default);
             }
             catch (Exception ex)
             {

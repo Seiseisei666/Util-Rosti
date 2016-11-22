@@ -6,27 +6,30 @@ using System.Threading.Tasks;
 
 namespace Utility_Promus
 {
-    class Attività
+	class Attività: TabellaDB
     {
         //Conteggio statico del numero
         static int count;
         public static int Count { get { return count; } }
 
-        //Campi privati
-        int id;
+
         TipoAttività tipo;
-        Individuo individuo;
+		public Individuo Individuo { get; private set; }
         string descrizione, indirizzo, occasioneSpec, siglaIstituzione;
         //TODO: LOCALITà ID
-        bool puntuale;
-        TipoData tipoInizio, tipoFine;
+		public bool Puntuale {get; private set;}
+		public TipoData tipoInizio {get; private set;}
+		public TipoData tipoFine{get; private set;}
 
-        Data inizioMin, inizioMax, fineMin, fineMax;
+		public Data inizioMin{get; private set;}
+		public Data inizioMax{get; private set;}
+		public Data fineMin{get; private set;} 
+		public Data fineMax{get; private set;}
         //Data iniMinLav, iniMaxLav, fineMinLav, fineMaxLav;
 
         public Data getDataLav(bool min, bool ini = true)
         {
-            if (puntuale)
+            if (Puntuale)
             {
                 if (min) return inizioMin.Inizio;
                 else return inizioMax.Fine;
@@ -46,33 +49,33 @@ namespace Utility_Promus
         public Attività (Individuo ind, string descrizione,TipoData tipo, Data data)
         {
             if (data == null) throw new ArgumentNullException("data");
-            this.id = ++count;
-            this.individuo = ind;
+			base.Id = ++count;
+			this.Individuo = ind;
             this.descrizione = descrizione;
             this.inizioMin = data;
             this.inizioMax = data;
-            this.puntuale = true;
+            this.Puntuale = true;
             this.tipoInizio = tipo;
             this.tipo = TipoAttività.AUTO;
         }
 
         public Attività(Individuo ind, string descrizione,Data inizio, Data fine)
         {
-            this.id = ++count;
-            this.individuo = ind;
+			this.Id = ++count;
+			this.Individuo = ind;
             this.descrizione = descrizione;
             this.inizioMin = inizio;
             this.inizioMax = inizio;
             this.fineMin = fine;
             this.fineMax = fine;
-            this.puntuale = true;
+            this.Puntuale = true;
             this.tipoInizio = TipoData.tra;
             this.tipo = TipoAttività.AUTO;
         }
 
         public string GetDescrizione ()
         {
-            if (puntuale && fineMin == null && fineMax == null)
+            if (Puntuale && fineMin == null && fineMax == null)
             {
                 return tipoInizio.ToString().ToCapitalCase() + inizioMin.ToString() + ": '" + descrizione + "'";
             }

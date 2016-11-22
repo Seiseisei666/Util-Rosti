@@ -14,8 +14,8 @@ namespace Utility_Promus.Ricerca
 
 		public bool Success {get; private set;}
 
-        event EventHandler onMatchSucceeded;
-        public event EventHandler OnInfoRetrieved;
+        event EventHandler matchSucceeded;
+        public event EventHandler infoRetrieved;
 
         /// <summary>
         /// Dizionario che mantiene in memoria tutti i gruppi nominativi di ogni singola ricerca
@@ -162,41 +162,49 @@ namespace Utility_Promus.Ricerca
 				p => regex_generati [p.Key])
 				.ToArray();
 
-            Reset();
+            reset();
+			this._cache = retrieved;
+			this.retrieved = new Dictionary<string, string>();
+			retrieved["testo"] = "";
+			this.matchSucceeded = null;
         }
 
-        void initialize()
+		void reset ()
+		{
+			this._isRunning = false;
+			this.Success = false;
+			continuazione_info = false;
+		}
+
+		/// <summary>
+		/// Legge eventuali info raccolte e resetta l'istanza
+		/// </summary>
+		public void Flush ()
+		{
+			if (this.Success)
+				onInfoRetrieved ();
+			this._cache = retrieved;
+			this.retrieved = new Dictionary<string, string>();
+			retrieved["testo"] = "";
+			this.matchSucceeded = null;
+			this.continuazione_info = false;
+			this._isRunning = false;
+		}
+
+		void initialize(string frase)
         {
             this._isRunning = true;
             this.Success = false;
+			this._frase = frase;
         }
-
-        void stop (bool success)
-        {
-            continuazione_info = true;
-            this._isRunning = false;
-            this.Success = success;
-            retrieved["testo"] += _frase;
-        }
-
-        public void Reset ()
-        {
-            this._cache = retrieved;
-            this.retrieved = new Dictionary<string, string>();
-            retrieved["testo"] = "";
-            this.onMatchSucceeded = null;
-            this._isRunning = false;
-            this.Success = false;
-            continuazione_info = false;
-        }
+			
 
         /// <summary>
         /// Comincia la scansione del testo
         /// </summary>
         public void Scan (string frase)
         {
-            initialize();
-            this._frase = frase;
+            initialize(frase);
 
             foreach (var re in filtri0)
             {
@@ -205,8 +213,6 @@ namespace Utility_Promus.Ricerca
 				else
 					break;
             }
-            if (continuazione_info && !Success)
-                retrieved["testo"] += _frase;
         }
         
         /// <summary>
@@ -215,11 +221,13 @@ namespace Utility_Promus.Ricerca
         /// <param name="re"></param>
         void tryMatch (Regex re)
         {
+			//Eseguo il match
             Match match = re.Match(_frase);
-            _ma = match;
-            _re = re;
-			Tuple<List<Regex>,List<Tuple<Action<string>,string>>> relazioni_re;
 
+			//Locali
+			_ma = match;
+			_re = re;
+			Tuple<List<Regex>,List<Tuple<Action<string>,string>>> relazioni_re;
 
             if (match.Success)
             {
@@ -230,11 +238,17 @@ namespace Utility_Promus.Ricerca
 
 
                 //Fine catena: info trovata
-                if (fine_catena)
-                {
-                    if (continuazione_info) Flush();
-                    stop(true);
-                }
+				if (fine_catena) {
+					this.Success = true;
+					if (continuazione_info) {
+						Flush ();
+					}
+					continuazione_info = true;
+					retrieved ["testo"] += _frase;
+				}
+
+
+
 
                 //Aggiungo le voci trovate al dizionario Retrieved
                 foreach (string nome in re.GetNamedGroupsNames())
@@ -247,20 +261,19 @@ namespace Utility_Promus.Ricerca
                         cmds.Item1.Invoke(cmds.Item2);
 
                     //Chiamate ricorsive
-                    foreach (var f in relazioni_re?.Item1)
+                    foreach (var f in relazioni_re.Item1)
                     {
                         if (_isRunning) tryMatch(f);
                         else return;
-                    } 
+					}
                 }
             }
         }
 
-        public void Flush ()
+        public void onInfoRetrieved ()
         {
-            onMatchSucceeded?.Invoke(this, null);
-            OnInfoRetrieved?.Invoke(this, null);
-            retrieved["testo"] = "";
+			if (matchSucceeded!= null) matchSucceeded.Invoke(this, null);
+			if (infoRetrieved != null) infoRetrieved.Invoke(this, null);
         }
 
         /// <summary>
@@ -336,7 +349,7 @@ namespace Utility_Promus.Ricerca
                 retrieved[key_inizio] = retrieved[key];
             }
 
-            onMatchSucceeded += (s, e) =>
+            matchSucceeded += (s, e) =>
             {
 
                 _ma = _ma.NextMatch();

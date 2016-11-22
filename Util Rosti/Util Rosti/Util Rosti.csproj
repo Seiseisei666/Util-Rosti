@@ -46,13 +46,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attività.cs" />
     <Compile Include="Base Dati\DataBase.cs" />
     <Compile Include="Base Dati\DBImporter.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="Extension Methods.cs" />
-    <Compile Include="Individuo.cs" />
     <Compile Include="Info_Parentela.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
@@ -63,7 +61,12 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Ricerca\Scanner.cs" />
-    <Compile Include="TabellaDB.cs" />
+    <Compile Include="Tabelle\Individuo.cs" />
+    <Compile Include="Tabelle\Attività.cs" />
+    <Compile Include="Tabelle\TabellaDB.cs" />
+    <Compile Include="Tabelle\Mappe\CSVAttività.cs" />
+    <Compile Include="Tabelle\Mappe\CSVIndividuo.cs" />
+    <Compile Include="Tabelle\RiferimentoT.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -86,4 +89,8 @@
   </Target>
   -->
   <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Tabelle\" />
+    <Folder Include="Tabelle\Mappe\" />
+  </ItemGroup>
 </Project>

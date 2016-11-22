@@ -117,7 +117,7 @@ namespace Utility_Promus
 			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
 			regexParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
 			scannerDate = new Ricerca.Scanner ("Data");
-            scannerDate.OnInfoRetrieved += retrieveInfo;
+            scannerDate.infoRetrieved += retrieveInfo;
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 
@@ -406,14 +406,13 @@ namespace Utility_Promus
             MatchCollection ritorniAcapo = Regex.Matches(corpo, @".+?\r?\n");
             foreach (Match paragrafetto in ritorniAcapo)
             {
-                scannerDate.Reset();
                 matches_frasi = rxSingolaFrase.Matches(paragrafetto.Value);
                 foreach (Match matchFrase in matches_frasi)
                 {
                     Ricerca.IRetriever retrievedInfo = scannerDate;
 					scannerDate.Scan (matchFrase.Value);
                 }
-                if (scannerDate.Success) scannerDate.Flush();
+				scannerDate.Flush();
             }
         }
 

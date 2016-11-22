@@ -7,8 +7,8 @@ Individui;ind_id;ind_nome;ind_att_prevalente;ind_musicista;ind_sesso;ind_proveni
 Legami;leg_id;ind_id;ind2_id;att_id;leg_tipo;leg_parente;leg_note;leg_incert;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;
 Localita;loc_id;loc_desc;prov_sigla;prov_cod_reg;prov_cod_stato;loc_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;
 Nomi_alternativi;nom_id;ind_id;nom_nome;nom_tipo;nom_incert;nom_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;
-rif_attivita;rif_att_id;att_id;doc_id;rif_att_pag;rif_att_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
-rif_individui;rif_ind_id;ind_id;doc_id;rif_ind_pag;rif_ind_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
-rif_legami;rif_legami_id;leg_id;doc_id;rif_pag;rif_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
-rif_nomi;nom_id;doc_id;rif_nom_pag;rif_nom_note;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;;
+rif_attivita;	rif_att_id;		att_id;	doc_id;rif_att_pag;	rif_att_note;	X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
+rif_individui;	rif_ind_id;		ind_id;	doc_id;rif_ind_pag;	rif_ind_note;	X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
+rif_legami;		rif_legami_id;	leg_id;	doc_id;rif_pag;		rif_note;		X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;
+rif_nomi;						nom_id;	doc_id;rif_nom_pag;	rif_nom_note;	X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;;
 titoli;titoli_id;ind_id;tit_titolo;tit_incert;X0VERN;XUTEN;XDTAGG;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -9,7 +9,7 @@ namespace Utility_Promus
 {
    
 	[Serializable()]
-    class Individuo
+	class Individuo : TabellaDB
     {
         #region ***************TABELLA INDIVIDUI*************
 
@@ -18,9 +18,10 @@ namespace Utility_Promus
         public static int Count { get { return count; } }
 
         //Campi privati
-        int id;
         string nome, cognome, provenienza, note;
         List<Attività> attività;
+
+
 
         List<string> voce_o_strumento;
         Data nascita, morte;
@@ -37,7 +38,6 @@ namespace Utility_Promus
                 return helper;
             }
         }
-        public int ID { get { return id; } }
 
         //Descrizioni pubbliche di campi privati
         public string CognomeNome
@@ -45,6 +45,7 @@ namespace Utility_Promus
             get
             { return (this.cognome + ", " + this.nome); }
         }
+
         public string Provenienza { get { return provenienza; } }
 
         public string AttivitàPrevalente
@@ -58,13 +59,10 @@ namespace Utility_Promus
             }
         }
 
-        public List<string> TutteAttività { get
-            {
-                var res = new List<string>(attività.Count);
-                foreach (Attività a in attività)
-                    res.Add(a.GetDescrizione());
-                return res;
-            } }
+		public List<Attività> GetAttività ()
+		{
+			return this.attività;
+		}
 
         /// <summary>
         /// Costruisce un individuo
@@ -72,7 +70,7 @@ namespace Utility_Promus
         /// </summary>
         public Individuo (string nome, string cognome, string attPreval = "", bool èMusicista = true)
         {
-            this.id = ++count;
+			this.Id = ++count;
             this.nome = nome;
             this.cognome = cognome;
             this.voce_o_strumento = new List<string>();
@@ -86,7 +84,10 @@ namespace Utility_Promus
 
         public void AddNota(string nota, bool aCapo = false)
         {
-            note = note +  nota + (aCapo ? ".\n" : "; ");
+			string _note = "";
+			if (!string.IsNullOrEmpty(this.note))
+				_note = note + (aCapo ? ".\n" : "; ");
+			_note += nota;
         }
 
         public void SetProvenienza (string provenienza)

@@ -114,6 +114,16 @@ namespace Utility_Promus
             return match.Length + match.Index - 1;
         }
 
+		/// <summary>
+		/// associa ai valori T/F di un bool una stringa arbitraria
+		/// </summary>
+		public static string Chars (this bool b, string t = "s", string f = "n")
+		{
+			return b
+					? t
+					: f;
+		}
+
 
         }
 

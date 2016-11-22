@@ -10,18 +10,11 @@ namespace Utility_Promus
 {
     class TabellaDB
     {
-        static int count;
         public string XUTEN { get { return "Ema"; } }
         public string XDTAGG { get { return string.Format("{0}-{1}-{2}", DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);} }
+		public string X0VERN {get {return "0000";}}
+		public int Id { get; protected set;}
 
-        int id;
-        
-        public void CsvExport()
-        {
-            CsvWriter writer = new CsvWriter(new System.IO.StreamWriter(""));
-            writer.Configuration.Delimiter = "#";
-
-
-                }
+		public abstract string GetNote();
     }
 }

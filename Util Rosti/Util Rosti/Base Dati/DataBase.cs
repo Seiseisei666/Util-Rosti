@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,9 +14,7 @@ namespace Utility_Promus.Base_Dati
         Dictionary
             <string,                    
                 Dictionary<string,
-                    List<string>>>
-          
-            _tabelle;
+                    List<string>>> _tabelle;
 
         public DataBase()
         {
@@ -76,6 +74,7 @@ namespace Utility_Promus.Base_Dati
             return null;
         }
 
+<<<<<<< Upstream, based on origin/master
         public dynamic GetRecord (string tabella, string query)
         {
             Dictionary<string, List<string>> _tabella;
@@ -126,7 +125,17 @@ namespace Utility_Promus.Base_Dati
             }
             return null;
         }
+=======
+		public object GetRecord (dynamic query)
+		{
+			string x = query.table;
+>>>>>>> 5763204 d
 
+			return new {
+				nome = "Tizio",
+				ID = 10
+			};
+		}
 
     }
 }
