@@ -3,7 +3,7 @@ using CsvHelper.Configuration;
 
 namespace Utility_Promus
 {
-	public class CSVIndividuo: CsvClassMap<Individuo>
+	class CSVIndividuo: CsvClassMap<Individuo>
 	{
 
 		public CSVIndividuo ()
@@ -11,7 +11,7 @@ namespace Utility_Promus
 			Map (m => m.Id);
 			Map (m => m.CognomeNome);
 			Map (m => m.AttivitàPrevalente);
-			Map (m => m.èMusicista.Chars());
+			Map (m => m.èMusicista.Chars("s", "n"));
 			Map (m => m.èMaschio.Chars ("m","f"));
 			Map (m => m.Provenienza);
 			Map (m => m.Note);

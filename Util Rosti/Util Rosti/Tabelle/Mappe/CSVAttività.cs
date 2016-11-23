@@ -3,7 +3,7 @@ using CsvHelper.Configuration;
 
 namespace Utility_Promus
 {
-	public class CSVAttività: CsvClassMap<Attività>
+	class CSVAttività: CsvClassMap<Attività>
 	{
 		/*
 		 * 
@@ -21,10 +21,10 @@ namespace Utility_Promus
 			Map (m => m.Puntuale.Chars("Si","No"));
 			Map (m => m.tipoInizio);
 			Map (m => m.tipoFine);
-			Map (m => m.inizioMin.FormatoDB);
-			Map (m => m.inizioMax.FormatoDB);
-			Map (m => m.fineMin.FormatoDB);
-			Map (m => m.fineMax.FormatoDB);
+			Map (m => m.inizioMin.FormatoDB());
+			Map (m => m.inizioMax.FormatoDB());
+			Map (m => m.fineMin.FormatoDB());
+			Map (m => m.fineMax.FormatoDB());
 			Map (m => m.getDataLav (true, true));
 			Map (m => m.getDataLav (false, true));
 			Map (m => m.getDataLav (true, false));

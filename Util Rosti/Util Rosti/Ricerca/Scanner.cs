@@ -14,8 +14,9 @@ namespace Utility_Promus.Ricerca
 
 		public bool Success {get; private set;}
 
-        event EventHandler matchSucceeded;
-        public event EventHandler infoRetrieved;
+        private event EventHandler matchSucceeded;
+        private event EventHandler _infoRetrieved;
+        public event EventHandler InfoRetrieved;
 
         /// <summary>
         /// Dizionario che mantiene in memoria tutti i gruppi nominativi di ogni singola ricerca
@@ -43,6 +44,8 @@ namespace Utility_Promus.Ricerca
         /// Tutti i pattern più generali, che non sono figli di nessun altro
         /// </summary>
         Regex[] filtri0;
+
+        List<Regex> _trace;
 
         /// <summary>
         /// Associa ad ogni pattern i suoi sottopattern, se ne ha
@@ -166,7 +169,7 @@ namespace Utility_Promus.Ricerca
 			this._cache = retrieved;
 			this.retrieved = new Dictionary<string, string>();
 			retrieved["testo"] = "";
-			this.matchSucceeded = null;
+			this._infoRetrieved = null;
         }
 
 		void reset ()
@@ -174,6 +177,7 @@ namespace Utility_Promus.Ricerca
 			this._isRunning = false;
 			this.Success = false;
 			continuazione_info = false;
+            _trace = new List<Regex>();
 		}
 
 		/// <summary>
@@ -186,9 +190,11 @@ namespace Utility_Promus.Ricerca
 			this._cache = retrieved;
 			this.retrieved = new Dictionary<string, string>();
 			retrieved["testo"] = "";
-			this.matchSucceeded = null;
+			this._infoRetrieved = null;
+            this.matchSucceeded = null;
 			this.continuazione_info = false;
 			this._isRunning = false;
+            this._trace.Clear();
 		}
 
 		void initialize(string frase)
@@ -196,6 +202,19 @@ namespace Utility_Promus.Ricerca
             this._isRunning = true;
             this.Success = false;
 			this._frase = frase;
+        }
+
+        void matchFound ()
+        {
+            this._isRunning = false;
+            this.Success = true;
+            if (matchSucceeded != null)
+            {
+                var handlers = matchSucceeded.GetInvocationList();
+                foreach (var h in handlers)
+                    _infoRetrieved += (EventHandler)h;
+            }
+            _trace.Add(_re);
         }
 			
 
@@ -209,7 +228,10 @@ namespace Utility_Promus.Ricerca
             foreach (var re in filtri0)
             {
 				if (_isRunning)
-					tryMatch (re);
+                {
+                    tryMatch(re);
+                }
+
 				else
 					break;
             }
@@ -239,7 +261,7 @@ namespace Utility_Promus.Ricerca
 
                 //Fine catena: info trovata
 				if (fine_catena) {
-					this.Success = true;
+                    matchFound();
 					if (continuazione_info) {
 						Flush ();
 					}
@@ -266,14 +288,16 @@ namespace Utility_Promus.Ricerca
                         if (_isRunning) tryMatch(f);
                         else return;
 					}
+                    matchSucceeded = null;
                 }
             }
         }
 
+
         public void onInfoRetrieved ()
         {
-			if (matchSucceeded!= null) matchSucceeded.Invoke(this, null);
-			if (infoRetrieved != null) infoRetrieved.Invoke(this, null);
+            if (_infoRetrieved != null) _infoRetrieved.Invoke(this, null);
+            if (InfoRetrieved != null) InfoRetrieved.Invoke(this, null);
         }
 
         /// <summary>
@@ -299,15 +323,6 @@ namespace Utility_Promus.Ricerca
 
         #region ACTIONS
 
-        /// <summary>
-        /// Carica dalla cache i dati relativi al parametro argomento
-        /// Nel caso non ci siano informazioni relative a un dato ma si ritiene siano state fornite nel precedente paragrafo
-        /// </summary>
-        /// <param name="param"></param>
-        public void LAST_VAL (string param)
-        {
-            retrieved[param] = _cache[param];
-        }
 
         /// <summary>
         /// Incrementa di uno il parametro (se numerico)
@@ -373,7 +388,12 @@ namespace Utility_Promus.Ricerca
             string gr, val;
             gr = split[0];
             val = split[1];
-            retrieved[gr] = val;
+matchSucceeded += (s, e) => retrieved[gr] = val;
+        }
+
+        public void LAST_VAL (string param)
+        {
+            retrieved[param] = _cache[param];
         }
 
         #endregion

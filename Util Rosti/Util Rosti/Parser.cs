@@ -117,7 +117,7 @@ namespace Utility_Promus
 			//fineParagrafo = new Regex(@"(\r\n)+", RegexOptions.Compiled);
 			regexParagrafo= new Regex( "(?<txt>(?:.+[\r\n])+?)(?:\r?\n)+", RegexOptions.Compiled);
 			scannerDate = new Ricerca.Scanner ("Data");
-            scannerDate.infoRetrieved += retrieveInfo;
+            scannerDate.InfoRetrieved += retrieveInfo;
             individui = new List<Individuo>();
             indici = new List<Tuple<int, int>>();
 
@@ -408,7 +408,7 @@ namespace Utility_Promus
             {
                 matches_frasi = rxSingolaFrase.Matches(paragrafetto.Value);
                 foreach (Match matchFrase in matches_frasi)
-                {
+{
                     Ricerca.IRetriever retrievedInfo = scannerDate;
 					scannerDate.Scan (matchFrase.Value);
                 }
@@ -427,7 +427,7 @@ namespace Utility_Promus
 
             tipoData = (TipoData)int.Parse(result.getInfo("tipo_data"));
 
-            if (tipoData== TipoData.tra)
+if (tipoData== TipoData.tra)
             {
                 g_i = result.getInfo("gg-inizio");
                 m_i = result.getInfo("mese-inizio");
