@@ -61,8 +61,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Ricerca\Scanner.cs" />
+    <Compile Include="Tabelle\Documento.cs" />
     <Compile Include="Tabelle\Individuo.cs" />
     <Compile Include="Tabelle\Attività.cs" />
+    <Compile Include="Tabelle\NomiAlternativi.cs" />
     <Compile Include="Tabelle\TabellaDB.cs" />
     <Compile Include="Tabelle\Mappe\CSVAttività.cs" />
     <Compile Include="Tabelle\Mappe\CSVIndividuo.cs" />
@@ -89,8 +91,5 @@
   </Target>
   -->
   <ItemGroup />
-  <ItemGroup>
-    <Folder Include="Tabelle\" />
-    <Folder Include="Tabelle\Mappe\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

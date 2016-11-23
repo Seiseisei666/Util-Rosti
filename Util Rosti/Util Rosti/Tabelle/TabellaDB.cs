@@ -15,6 +15,6 @@ namespace Utility_Promus
 		public string X0VERN {get {return "0000";}}
 		public int Id { get; protected set;}
 
-		public abstract string GetNote();
+		public virtual string GetNote() { return "NULL"; }
     }
 }

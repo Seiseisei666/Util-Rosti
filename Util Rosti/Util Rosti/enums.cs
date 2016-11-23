@@ -44,5 +44,7 @@
 		Fonte,
 	}
 
+    enum TipoNomeAlternativo { Soprannome, Variante, Appellativo, Origine }
 
+    enum TIpoDocumentoBibliografico { FonteDocumentale,FonteBibliografica}
 }

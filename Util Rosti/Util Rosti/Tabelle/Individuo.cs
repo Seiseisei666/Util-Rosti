@@ -84,10 +84,15 @@ namespace Utility_Promus
 
         public void AddNota(string nota, bool aCapo = false)
         {
-			string _note = "";
+			string helper = "";
 			if (!string.IsNullOrEmpty(this.note))
-				_note = note + (aCapo ? ".\n" : "; ");
-			_note += nota;
+				helper = note + (aCapo ? "\n" : "; ");
+			helper += nota;
+            note = helper;
+        }
+        public override string GetNote()
+        {
+            return this.note;
         }
 
         public void SetProvenienza (string provenienza)
