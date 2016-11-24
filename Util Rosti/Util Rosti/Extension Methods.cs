@@ -37,6 +37,11 @@ namespace Utility_Promus
             return str.Where (c => !char.IsWhiteSpace(c)).ToString();
         }
 
+        public static string RemoveNewLineChars (this string str)
+        {
+            return str.TrimEnd(new char[] { '\n', '\r' });
+        }
+
         /// <summary>
         /// Converte i numeri romani in cifre arabe
         /// </summary>
@@ -123,6 +128,11 @@ namespace Utility_Promus
 					? t
 					: f;
 		}
+
+        public static List<T> RemoveLast<T> (this List<T> list )
+        {
+            return list.Take(list.Count - 1).ToList();
+        }
 
 
         }

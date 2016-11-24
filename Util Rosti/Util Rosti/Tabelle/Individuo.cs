@@ -117,7 +117,7 @@ namespace Utility_Promus
 			string descr = CognomeNome;
 			descr += "\r\n";
 			foreach (var v in voce_o_strumento)
-				descr += (v + ", ");
+				descr += v;
 			int cAtt = 1;
 			foreach (var a in attività)
 				descr += (string.Format("\r\n*{0}*: {1}", cAtt++, a.GetDescrizione ()));

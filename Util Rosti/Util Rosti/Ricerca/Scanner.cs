@@ -14,8 +14,6 @@ namespace Utility_Promus.Ricerca
 
 		public bool Success {get; private set;}
 
-        private event EventHandler matchSucceeded;
-        private event EventHandler _infoRetrieved;
         public event EventHandler InfoRetrieved;
 
         /// <summary>
@@ -26,7 +24,9 @@ namespace Utility_Promus.Ricerca
         /// <summary>
         /// Cache del dizionario
         /// </summary>
-        Dictionary<string, string> _cache;
+        Dictionary<string, string> retrieved_cache;
+
+        Dictionary<string, string> retrieved_temp;
 
         string _frase;
 
@@ -45,7 +45,7 @@ namespace Utility_Promus.Ricerca
         /// </summary>
         Regex[] filtri0;
 
-        List<Regex> _trace;
+        List<Regex> traccia, traccia_temp;
 
         /// <summary>
         /// Associa ad ogni pattern i suoi sottopattern, se ne ha
@@ -165,56 +165,10 @@ namespace Utility_Promus.Ricerca
 				p => regex_generati [p.Key])
 				.ToArray();
 
-            reset();
-			this._cache = retrieved;
+            _reset();
+			this.retrieved_cache = retrieved;
 			this.retrieved = new Dictionary<string, string>();
 			retrieved["testo"] = "";
-			this._infoRetrieved = null;
-        }
-
-		void reset ()
-		{
-			this._isRunning = false;
-			this.Success = false;
-			continuazione_info = false;
-            _trace = new List<Regex>();
-		}
-
-		/// <summary>
-		/// Legge eventuali info raccolte e resetta l'istanza
-		/// </summary>
-		public void Flush ()
-		{
-			if (this.Success)
-				onInfoRetrieved ();
-			this._cache = retrieved;
-			this.retrieved = new Dictionary<string, string>();
-			retrieved["testo"] = "";
-			this._infoRetrieved = null;
-            this.matchSucceeded = null;
-			this.continuazione_info = false;
-			this._isRunning = false;
-            this._trace.Clear();
-		}
-
-		void initialize(string frase)
-        {
-            this._isRunning = true;
-            this.Success = false;
-			this._frase = frase;
-        }
-
-        void matchFound ()
-        {
-            this._isRunning = false;
-            this.Success = true;
-            if (matchSucceeded != null)
-            {
-                var handlers = matchSucceeded.GetInvocationList();
-                foreach (var h in handlers)
-                    _infoRetrieved += (EventHandler)h;
-            }
-            _trace.Add(_re);
         }
 			
 
@@ -229,12 +183,15 @@ namespace Utility_Promus.Ricerca
             {
 				if (_isRunning)
                 {
+                    traccia_temp.Clear();
                     tryMatch(re);
                 }
 
-				else
-					break;
+				else break;
             }
+
+            if (continuazione_info)
+                retrieved_temp["testo"] += _frase;
         }
         
         /// <summary>
@@ -253,52 +210,118 @@ namespace Utility_Promus.Ricerca
 
             if (match.Success)
             {
+
                 relazioni.TryGetValue(re, out relazioni_re);
-                if (relazioni.ContainsKey(re))
-                    relazioni_re = relazioni[re];
-                bool fine_catena =  relazioni_re == null || !relazioni_re.Item1.Any();
+                bool fine_catena = relazioni_re == null || !relazioni_re.Item1.Any();
 
+                if (fine_catena && continuazione_info) Flush();
 
-                //Fine catena: info trovata
-				if (fine_catena) {
+                saveInfos();
+
+                if (fine_catena)
+                {
+                    copyInfos();
                     matchFound();
-					if (continuazione_info) {
-						Flush ();
-					}
-					continuazione_info = true;
-					retrieved ["testo"] += _frase;
-				}
+                }
 
-
-
-
-                //Aggiungo le voci trovate al dizionario Retrieved
-                foreach (string nome in re.GetNamedGroupsNames())
-                    retrieved[nome] = match.Groups[nome].Value;
+                continuazione_info = true;
 
                 if (relazioni_re != null)
                 {
-                    //Eseguo i comandi
-                    foreach (var cmds in relazioni_re.Item2)
-                        cmds.Item1.Invoke(cmds.Item2);
-
                     //Chiamate ricorsive
-                    foreach (var f in relazioni_re.Item1)
+                    foreach (var filtro in relazioni_re.Item1)
                     {
-                        if (_isRunning) tryMatch(f);
-                        else return;
+                        if (_isRunning) tryMatch(filtro);
+                        else break;
 					}
-                    matchSucceeded = null;
                 }
+                if (!Success) traccia_temp.RemoveLast();
+                
             }
         }
+        #region Funzioni Helper
 
-
-        public void onInfoRetrieved ()
+        /// <summary>
+        /// Chiamato dal costruttore. Inizializza l'oggetto
+        /// </summary>
+        void _reset()
         {
-            if (_infoRetrieved != null) _infoRetrieved.Invoke(this, null);
+            this._isRunning = false;
+            this.Success = false;
+            continuazione_info = false;
+            traccia_temp = new List<Regex>();
+            retrieved_temp = new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// Chiamato all'inizio di ogni singola scansione
+        /// </summary>
+        /// <param name="frase"></param>
+        void initialize(string frase)
+        {
+            this._isRunning = true;
+            this.Success = false;
+            this._frase = frase;
+        }
+        /// <summary>
+        /// Legge eventuali info raccolte e resetta l'istanza
+        /// </summary>
+        public void Flush()
+        {
+
+            if (this.Success)
+                onInfoRetrieved();
+            this.retrieved_cache = retrieved;
+            this.traccia = new List<Regex>();
+            this.retrieved_temp = new Dictionary<string, string>();
+            retrieved_temp["testo"] = "";
+            this._isRunning = false;
+            this.continuazione_info = false;
+        }
+
+        void saveInfos()
+        {
+            //Copio temporaneamente le info
+            foreach (string nome in _re.GetNamedGroupsNames())
+                retrieved_temp[nome] = _ma.Groups[nome].Value;
+
+            traccia_temp.Add(_re);
+        }
+
+        void copyInfos()
+        {
+            retrieved = retrieved_temp;
+            traccia = traccia_temp;
+            
+        }
+
+        void matchFound()
+        {
+            this._isRunning = false;
+            this.Success = true;
+        }
+
+        void executeScript()
+        {
+            Tuple<List<Regex>, List<Tuple<Action<string>, string>>> relazioni_re;
+
+            foreach (var re in traccia)
+            {
+                if (relazioni.TryGetValue(re, out relazioni_re))
+                    foreach (var cmd in relazioni_re.Item2)
+                        cmd.Item1.Invoke(cmd.Item2);
+            }
+            traccia.Clear();
+        }
+
+
+        void onInfoRetrieved ()
+        {
+            executeScript();
             if (InfoRetrieved != null) InfoRetrieved.Invoke(this, null);
         }
+        
+        #endregion
 
         /// <summary>
         /// Metodo pubblico per leggere i risultati del match
@@ -357,28 +380,17 @@ namespace Utility_Promus.Ricerca
         /// </summary>
         public void NEXT (string param)
         {
-            string[] keys = retrieved.Keys.ToArray();
-            foreach (var key in keys)
+            _ma = _ma.NextMatch();
+            if (_ma.Success)
             {
-                string key_inizio = key + "-inizio";
-                retrieved[key_inizio] = retrieved[key];
-            }
-
-            matchSucceeded += (s, e) =>
-            {
-
-                _ma = _ma.NextMatch();
-                if (_ma.Success)
+                foreach (var nome in _re.GetNamedGroupsNames())
                 {
-                    foreach (var nome in _re.GetNamedGroupsNames())
-                    {
-                        string key = nome + "-inizio";
-                        retrieved[key] = retrieved[nome];
-                        key = nome + "-fine";
-                        retrieved[key] = _ma.Groups[nome].Value;
-                    }
+                    string key = nome + "-inizio";
+                    retrieved[key] = retrieved[nome];
+                    key = nome + "-fine";
+                    retrieved[key] = _ma.Groups[nome].Value;
                 }
-            };
+            }
         }
 
         public void SET_VAL (string param)
@@ -388,12 +400,12 @@ namespace Utility_Promus.Ricerca
             string gr, val;
             gr = split[0];
             val = split[1];
-matchSucceeded += (s, e) => retrieved[gr] = val;
+            retrieved[gr] = val;
         }
 
         public void LAST_VAL (string param)
         {
-            retrieved[param] = _cache[param];
+            retrieved[param] = retrieved_cache[param];
         }
 
         #endregion

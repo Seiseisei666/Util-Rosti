@@ -51,7 +51,7 @@ namespace Utility_Promus
             if (data == null) throw new ArgumentNullException("data");
 			base.Id = ++count;
 			this.Individuo = ind;
-            this.descrizione = descrizione;
+            this.descrizione = descrizione.RemoveNewLineChars();
             this.inizioMin = data;
             this.inizioMax = data;
             this.Puntuale = true;
@@ -63,7 +63,7 @@ namespace Utility_Promus
         {
 			this.Id = ++count;
 			this.Individuo = ind;
-            this.descrizione = descrizione;
+            this.descrizione = descrizione.RemoveNewLineChars();
             this.inizioMin = inizio;
             this.inizioMax = inizio;
             this.fineMin = fine;
@@ -77,7 +77,7 @@ namespace Utility_Promus
         {
             if (Puntuale && fineMin == null && fineMax == null)
             {
-                return tipoInizio.ToString().ToCapitalCase() + inizioMin.ToString() + ": '" + descrizione + "'";
+                return tipoInizio.ToString().ToCapitalCase() + " " + inizioMin.ToString() + ": '" + descrizione + "'";
             }
 
             else
