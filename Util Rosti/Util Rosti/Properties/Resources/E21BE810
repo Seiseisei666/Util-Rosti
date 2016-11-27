@@ -13,14 +13,14 @@ Data;mese succ;mese\ss(?:egu|ucc);8;;INCREM(mese)
 Data;anno succ;anno\ss(?:egu|ucc);9;;INCREM(aaaa)
 Data;prima;\b(?:[Pp]rima\sd(?:i|el)|[Ee]ntro\s(?:il\s|la\s|l'))(?<p>);10;0,1,2,3,4,5;SET_VAL(tipo_data,1)
 Data;fino a;\b(?:[SFsf]ino\sal?\s(?<p>));11;0,1,2,3,4,5,6;SET_VAL(tipo_data,2)
-Data;a partire da;\b[Dd]a(?:l\s|ll')?(?<p>);12;0,1,2,3,4,5,6;SET_VAL(tipo_data,3)
+Data;a partire da;\b(?:[Dd]a(?:l\s|ll')?|[Dd]opo\s(?:il\s|la\s|l'))(?<p>);12;0,1,2,3,4,5,6;SET_VAL(tipo_data,3)
+Data;a partire da;\b(?:[FfSs]in\sda(?:\s|l\s|ll'));13;0,1,2,3,4,5,6;SET_VAL(tipo_data,3)
 Data;dopo il;\b(?:[Dd]opo\s(?:il\s|la\s|l'));14;0,1,2,3,4,5;SET_VAL(tipo_data,4)
-Data;il;\b(?:[Ii]l|[Ll]'|[Nn]el(?:l')?)(?<p>);15;0,1,2,3,4,5,6;SET_VAL(tipo_data,5)
-Data;intorno a;\b(?:[Ii]ntorno\sa(?:l?\s|ll')|[Cc]irca)(?<p>);16;0,1,2,3,4,5,6;SET_VAL(tipo_data,6)
-Data;sul finire di;\b(?:(?:fin(?:ir)?e|termine)\sd(?:i|el(?:l')?))(?<p>);17;2,3;SET_VAL(tipo_data,6)
-Data;ammesso;\b(?:a\.\s?)(?<p>);20;0,1;SET_VAL(tipo_data,5)
-Data;dimesso;\b(?:d\.\s?)(?<p>);21;0,1;SET_VAL(tipo_data,5)
+Data;il;\b?(?:[Ii]l|[lL]\'\d|[Nn]e(?:l\s|ll'));15;0,1,2,3,4,5,6;SET_VAL(tipo_data,5)
+Data;intorno a;\b?(?:[Ii]ntorno\sa(?:l?\s|ll')|[Cc]irca\b);16;0,1,2,3,4,5,6;SET_VAL(tipo_data,6)
+Data;sul finire di;\b?(?:[Ss]ul\sfinire\sd(?:i|el?)\b);17;2,3;SET_VAL(tipo_data,6)
+Data;ammesso;\b?(?:a\.\s?);20;0,1;SET_VAL(tipo_data,5)
+Data;dimesso;\b?(?:d\.\s?);21;0,1;SET_VAL(tipo_data,5)
 Salario;scudi;\(?V\s\(?<paga>d\d?)\sal\s(?<ogni>mese)\)?;22;;
 Fonti;I&E;\(I&E.+\);23;;
-Biblio;pubblicaz;"(?<autore>[\w'].+)[\s\,]{1,3}(?<testo>[\w',:])\s?\s?\((?<aaaa>\d{4}(?:-\d{4})?)[\s,]{1,3}pp?\.\s?(?<pag>.*?);";24;;
-Data;;;;;
+Biblio;pubblicaz;"(?<autore>[\w'].+)[\s\,]{1,3}(?<testo>[\w',:])\s?\s?\((?<aaaa>\d{4}(?:-\d{4})?)[\s,]{1,3}pp?\.\s?(?<pag>.*?);";24

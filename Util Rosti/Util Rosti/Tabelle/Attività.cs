@@ -61,6 +61,7 @@ namespace Utility_Promus
 
         public Attività(Individuo ind, string descrizione,Data inizio, Data fine)
         {
+            if (inizio == null || fine == null) throw new ArgumentNullException();
 			this.Id = ++count;
 			this.Individuo = ind;
             this.descrizione = descrizione.RemoveNewLineChars();

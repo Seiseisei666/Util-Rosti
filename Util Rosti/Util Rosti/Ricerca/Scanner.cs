@@ -198,10 +198,10 @@ namespace Utility_Promus.Ricerca
         /// Metodo interno che si chiama ricorsivamente
         /// </summary>
         /// <param name="re"></param>
-        void tryMatch (Regex re)
+        void tryMatch (Regex re, int offset = 0)
         {
 			//Eseguo il match
-            Match match = re.Match(_frase);
+            Match match = re.Match(_frase, offset);
 
 			//Locali
 			_ma = match;
@@ -228,10 +228,11 @@ namespace Utility_Promus.Ricerca
 
                 if (relazioni_re != null)
                 {
+                    int _offset = match.Groups["p"].Index;
                     //Chiamate ricorsive
                     foreach (var filtro in relazioni_re.Item1)
                     {
-                        if (_isRunning) tryMatch(filtro);
+                        if (_isRunning) tryMatch(filtro, offset);
                         else break;
 					}
                 }
